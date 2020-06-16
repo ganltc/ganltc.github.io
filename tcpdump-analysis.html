@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Malahal Naineni" />
+
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary">
+
+<meta name="keywords" content="tcpdump, tcpdump, " />
+
+<meta property="og:title" content="tcpdump analysis "/>
+<meta property="og:url" content="https://ganltc.github.io/tcpdump-analysis.html" />
+<meta property="og:description" content="tcpdump analysis for nfs issues" />
+<meta property="og:site_name" content="ganltc blog" />
+<meta property="og:article:author" content="Malahal Naineni" />
+<meta property="og:article:published_time" content="2017-09-16T00:00:00-05:00" />
+<meta property="og:article:modified_time" content="2017-09-16T00:00:00-05:00" />
+<meta name="twitter:title" content="tcpdump analysis ">
+<meta name="twitter:description" content="tcpdump analysis for nfs issues">
+
+        <title>tcpdump analysis  · ganltc blog
+</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/elegant.prod.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/custom.css" media="screen">
+
+        <link href="https://ganltc.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="ganltc blog - Full Atom Feed" />
+
+
+    </head>
+    <body>
+        <div id="content">
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="https://ganltc.github.io/"><span class=site-name>ganltc blog</span></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right top-menu">
+                                <li >
+                                    <a href=
+                                       https://ganltc.github.io
+                                    >Home</a>
+                                </li>
+                                <li ><a href="https://ganltc.github.io/categories.html">Categories</a></li>
+                                <li ><a href="https://ganltc.github.io/tags.html">Tags</a></li>
+                                <li ><a href="https://ganltc.github.io/archives.html">Archives</a></li>
+                                <li><form class="navbar-search" action="https://ganltc.github.io/search.html" onsubmit="return validateForm(this.elements['q'].value);"> <input type="text" class="search-query" placeholder="Search" name="q" id="tipue_search_input"></form></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="span1"></div>
+                    <div class="span10">
+<article itemscope>
+<div class="row-fluid">
+    <header class="page-header span10 offset2">
+        <h1>
+            <a href="https://ganltc.github.io/tcpdump-analysis.html">
+                tcpdump analysis
+            </a>
+        </h1>
+    </header>
+</div>
+
+<div class="row-fluid">
+        <div class="span8 offset2 article-content">
+            
+            <div class="section" id="hangs">
+<h2>Hangs</h2>
+<p>Note that if an NFS server doesn't respond to a client's request, the
+request should be retried by the NFS client. Taking tcpdump for hangs
+should be the best way to determine if it is a client's fault or the
+server's fault. If you don't see anything in the tcpdump, then it is a
+client's failure to retry. If the client is retrying but the server
+isn't responding, then it is likely the server's issue. If they both
+talk to each other same thing over and over again, then it is time to
+consult the protocol to see why that is happening and whose fault it is.</p>
+<p>Since this is a hang and you want to see what is happening in its full
+glory, capturing everything at the NFS client would be ideal assuming
+that the server might be serving other NFS clients. The following
+tcpdump options while executing it from NFS client are recommented, use
+your best judgement though:</p>
+<pre class="literal-block">
+tcpdump -i &lt;iface&gt; -s0 -w &lt;pcapfile-name&gt; host &lt;NFS-server-ip-address&gt;
+</pre>
+</div>
+<div class="section" id="performance">
+<h2>Performance</h2>
+<p>Performance should be analysed by performance counters. This is beyond
+the scope of tmcpdump. Tcpdump sometimes gives a good indication of
+performance issues by RTT statistics. The following pcap file shows high
+WRITE (with FILE_SYNC mode) average response time (78ms), most likely
+due to the backend file system being slow (with large files!). It most
+likely caused other operations to be slow as well:</p>
+<pre class="literal-block">
+$ tshark -q -zrpc,srt,100003,3  -r slow-writes.pcap
+
+=======================================================
+NFS Version 3 SRT Statistics:
+Filter:
+Procedure        Calls    Min SRT    Max SRT    Avg SRT
+GETATTR           2549   0.000056   6.688285   0.222500
+SETATTR             79   0.000100   0.186188   0.008062
+ACCESS             541   0.014839   5.270222   0.285889
+READ                 2   0.132805   2.016926   1.074866
+WRITE             9188   0.000125   7.358130   0.784342
+READDIRPLUS       1821   0.000078   1.096325   0.042413
+FSSTAT            1210   0.000055   7.479788   0.322355
+COMMIT               1   0.022565   0.022565   0.022565
+=======================================================
+</pre>
+</div>
+<div class="section" id="filter-nfs-port-traffic">
+<h2>Filter NFS port traffic</h2>
+<p>Port 2049 is used for NFSv3 and NFSv4. Note that MOUNT, NLM, NSM protocols used
+in NFSv3 environments use random ports.</p>
+<p>The following filter will display port 2049 (aka NFS) traffic only:</p>
+<pre class="literal-block">
+$ tshark -Ynfs  -r nfs.pcap
+7          0 192.168.200.16 -&gt; 192.168.200.184 NFS 4302 V3 WRITE Call, FH: 0xdb3717db Offset: 20603228160 Len: 4096 FILE_SYNC
+10          0 192.168.102.121 -&gt; 192.168.102.183 NFS 210 V3 FSSTAT Call, FH: 0x6eb2ec3f
+14          0 192.168.200.27 -&gt; 192.168.200.184 NFS 4310 V3 WRITE Call, FH: 0x50a17930 Offset: 2528481280 Len: 4096 FILE_SYNC
+27          0 192.168.101.41 -&gt; 192.168.101.183 NFS 186 V3 GETATTR Call, FH: 0xc4cfb703
+31          0 192.168.200.16 -&gt; 192.168.200.184 NFS 4302 V3 WRITE Call, FH: 0xc36dcd2e Offset: 21383094272 Len: 4096 FILE_SYNC
+35          0 192.168.200.11 -&gt; 192.168.200.184 NFS 24790 V3 WRITE Call, FH: 0x4c45ddae Offset: 2464600064 Len: 24576 FILE_SYNC
+45          0 192.168.200.25 -&gt; 192.168.200.184 NFS 8406 V3 WRITE Call, FH: 0xc0d7fbd3 Offset: 2523549696 Len: 8192 FILE_SYNC
+51          0 192.168.200.11 -&gt; 192.168.200.184 NFS 3822 V3 WRITE Call, FH: 0x424ed19f Offset: 41099276288 Len: 53248 FILE_SYNC
+59          0 192.168.102.183 -&gt; 192.168.102.121 NFS 230 V3 FSSTAT Reply (Call In 10)
+60          0 192.168.102.121 -&gt; 192.168.102.183 NFS 210 V3 FSSTAT Call, FH: 0x68a15344
+</pre>
+</div>
+<div class="section" id="capturing-nfsv3-byte-range-lock-traffic">
+<h2>Capturing NFSv3 byte range lock traffic</h2>
+<p>NFSv3 environments use NLM protocol. Find the NLM port number using &quot;rcpinfo -p
+&lt;NFS-server&gt;&quot; and search for nlockmgr port number. Then use the tcpdump &quot;port
+&lt;port&gt;&quot; option to capture only the NLM traffic. For example, tcp NLM port
+number is 46859 in the example below:</p>
+<pre class="literal-block">
+# rpcinfo -p vm2
+  program vers proto   port  service
+   100000    4   tcp    111  portmapper
+   100000    3   tcp    111  portmapper
+   100000    2   tcp    111  portmapper
+   100000    4   udp    111  portmapper
+   100000    3   udp    111  portmapper
+   100000    2   udp    111  portmapper
+   100024    1   udp  55665  status
+   100024    1   tcp  49741  status
+   100003    3   udp   2049  nfs
+   100003    3   tcp   2049  nfs
+   100003    4   udp   2049  nfs
+   100003    4   tcp   2049  nfs
+   100005    1   udp  60952  mountd
+   100005    1   tcp  45982  mountd
+   100005    3   udp  60952  mountd
+   100005    3   tcp  45982  mountd
+   100021    4   udp  33489  nlockmgr
+   100021    4   tcp  46859  nlockmgr
+   100011    1   udp  50620  rquotad
+   100011    1   tcp  33899  rquotad
+   100011    2   udp  50620  rquotad
+   100011    2   tcp  33899  rquotad
+</pre>
+<p>To capture traffic going to or from port 46859, you can do:</p>
+<pre class="literal-block">
+tcpdump -i &lt;iface&gt; -s0 -w &lt;pcapfile-name&gt; &quot;tcp port 46859 and host &lt;NFS-server-ip-address&gt;&quot;
+</pre>
+</div>
+
+
+
+             
+ 
+            
+            
+            
+
+
+
+
+
+
+            <hr/>
+        </div>
+        <section id="article-sidebar" class="span2">
+            <h4>Published</h4>
+            <time itemprop="dateCreated" datetime="2017-09-16T00:00:00-05:00">Sep 16, 2017</time>
+
+            <h4>Category</h4>
+            <a class="category-link" href="https://ganltc.github.io/categories.html#tcpdump-ref">tcpdump</a>
+            <h4>Tags</h4>
+            <ul class="list-of-tags tags-in-article">
+                <li><a href="https://ganltc.github.io/tags.html#tcpdump-ref">tcpdump
+                    <span>1</span>
+</a></li>
+            </ul>
+<h4>Contact</h4>
+<div id="sidebar-social-link">
+</div>
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+</div>
+</article>
+                    </div>
+                    <div class="span1"></div>
+                </div>
+            </div>
+        </div>
+<footer>
+
+
+
+
+    <div id="fpowered">
+        Powered by: <a href="http://getpelican.com/" title="Pelican Home Page" target="_blank" rel="nofollow noopener noreferrer">Pelican</a>
+        Theme: <a href="https://elegant.oncrashreboot.com/" title="Theme Elegant Home Page" target="_blank" rel="nofollow noopener noreferrer">Elegant</a>
+    </div>
+</footer>            <script src="//code.jquery.com/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script>
+            function validateForm(query)
+            {
+                return (query.length > 0);
+            }
+        </script>
+
+    <script>
+    (function () {
+        if (window.location.hash.match(/^#comment-\d+$/)) {
+            $('#comment_thread').collapse('show');
+        }
+    })();
+    window.onhashchange=function(){
+        if (window.location.hash.match(/^#comment-\d+$/))
+            window.location.reload(true);
+    }
+    $('#comment_thread').on('shown', function () {
+        var link = document.getElementById('comment-accordion-toggle');
+        var old_innerHTML = link.innerHTML;
+        $(link).fadeOut(200, function() {
+            $(this).text('Click here to hide comments').fadeIn(200);
+        });
+        $('#comment_thread').on('hidden', function () {
+            $(link).fadeOut(200, function() {
+                $(this).text(old_innerHTML).fadeIn(200);
+            });
+        })
+    })
+</script>
+
+    </body>
+    <!-- Theme: Elegant built for Pelican
+        License : MIT -->
+</html>

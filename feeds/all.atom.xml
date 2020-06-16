@@ -1,0 +1,1390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>ganltc blog</title><link href="https://ganltc.github.io/" rel="alternate"></link><link href="https://ganltc.github.io/feeds/all.atom.xml" rel="self"></link><id>https://ganltc.github.io/</id><updated>2020-03-10T00:00:00-05:00</updated><entry><title>Ganesha rpms with ARENA_MAX and malloc_trim support.</title><link href="https://ganltc.github.io/ganesha-rpms-with-arena_max-and-malloc_trim-support.html" rel="alternate"></link><published>2019-09-25T00:00:00-05:00</published><updated>2019-09-25T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2019-09-25:/ganesha-rpms-with-arena_max-and-malloc_trim-support.html</id><summary type="html">&lt;p&gt;glibc is known to use as many ARENAS (aka memory pools) as 8 times the
+number of CPU threads a systems has. This makes a multi-threaded
+application like NFS-Ganesha to use a lot more memory than what the
+application actually needs. The following NFS-Ganesha rpms have settings
+to limit MAX …&lt;/p&gt;</summary><content type="html">&lt;p&gt;glibc is known to use as many ARENAS (aka memory pools) as 8 times the
+number of CPU threads a systems has. This makes a multi-threaded
+application like NFS-Ganesha to use a lot more memory than what the
+application actually needs. The following NFS-Ganesha rpms have settings
+to limit MAX ARENAS as well as a dynamic malloc_trim() which release
+memory back to the kernel. These are viewed as stop gap mechanisms until
+NFS-Ganesha memory allocations are audited to manage long lived
+allocations on its own!&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;V2.3.2-ibm67  (for Scale version 4.2.3)&lt;/li&gt;
+&lt;li&gt;V2.5.3-ibm036.10  (for Scale version 5.0.1 and up)&lt;/li&gt;
+&lt;li&gt;V2.7.5-ibm052.00  (for Scale version 5.0.4 but should be usable with
+5.0.1 and up as well)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;See &lt;a class="reference external" href="https://ganltc.github.io/nfs-ganesha-upgrade-instructions.html"&gt;https://ganltc.github.io/nfs-ganesha-upgrade-instructions.html&lt;/a&gt; for updating NFS-Ganesha packages&lt;/p&gt;
+&lt;div class="section" id="malloc-arena-max"&gt;
+&lt;h2&gt;MALLOC_ARENA_MAX&lt;/h2&gt;
+&lt;p&gt;The MALLOC_ARENA_MAX value from /etc/sysconfig/ganesha file is used
+while starting up NFS-Ganesha daemon. If you want to restrict glibc to
+use only 40 ARENAS, append the following line to /etc/sysconfig/ganesha
+(yes, the string MALLOC_ARENA_MAX appears twice, outside the quotes and
+inside the quotes!) and restart CES NFS service using mmces command:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+MALLOC_ARENA_MAX=&amp;quot;MALLOC_ARENA_MAX=40&amp;quot;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="enable-dynamic-malloc-trim-support"&gt;
+&lt;h2&gt;Enable Dynamic Malloc Trim support&lt;/h2&gt;
+&lt;p&gt;There are two ways to enable dynamic malloc_trim support.&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;This one changes ganesha config file
+/var/mmfs/ces/nfs-config/gpfs.ganesha.main.conf file. This method
+restarts nfs-ganesha daemon on all nodes due to mmccr update. See
+&lt;a class="reference external" href="https://ganltc.github.io/nfs-ganesha-configuration-on-spectrum-scale.html"&gt;https://ganltc.github.io/nfs-ganesha-configuration-on-spectrum-scale.html&lt;/a&gt;
+for changing gpfs.ganesha.main.conf file! Add the following parameter
+to NFS_CORE_PARAM{} block to enable dynamic malloc trim support:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+enable_trim = true;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;The second method uses the following dbus command to enable dynamic
+malloc trim support.  This needs to be run only when the nfs-ganesha
+daemon is already up and running. This affects only the node you run
+this command and you need to run every time you restart nfs-ganesha
+daemon as this is not persistent!:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr trim enable
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="dynamic-malloc-trim-support-commands"&gt;
+&lt;h2&gt;Dynamic malloc_trim support commands&lt;/h2&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;To enable it (&lt;em&gt;disabled by default&lt;/em&gt;):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr trim enable
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;To disable it:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr trim disable
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;To know its status:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr trim status
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;To call malloc_trim() just one time:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr trim call
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content><category term="memory"></category><category term="mmleak"></category><category term="trim"></category></entry><entry><title>Setting up environment to analyse coredumps</title><link href="https://ganltc.github.io/setting-up-environment-to-analyse-coredumps.html" rel="alternate"></link><published>2019-08-29T00:00:00-05:00</published><updated>2019-08-29T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2019-08-29:/setting-up-environment-to-analyse-coredumps.html</id><summary type="html">&lt;p class="first last"&gt;Setting up environment to analyse coredumps&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;All we need is gdb with correct version of binaries and their debuginfo
+rpms. If the coredump happens to be on RHEL7.4 and you have a RHEL7.3,
+good luck installing correct binaries. Yum may bail out with broken
+dependencies, and worse, if you provide --skip-broken, it may happily
+install a version other than what you need. Of course, downgrading
+packages is even worse!&lt;/p&gt;
+&lt;p&gt;Technically, you can install all the binary rpms (if you can download
+them!) in a different location or just use rpm2cpio to get the shared
+libraries and let gdb know where your shared libraries are. It is
+possible this way, but docker seems a much better option! Here are the
+steps I used. Bonus, if you mess up your docker container, spin a new
+one from scratch!&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make sure your base system can run docker. Some older versions of
+RHEL7 have issues. I would start with RHEL7.5 or the latest and
+install docker.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Download the coredump and other details on the docker host, e.g.
+at /data&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Create a docker container with correct version as the system that took
+the coredump (Using RHEL7.4 here, power Linux docker image names
+might be different). Also use &lt;strong&gt;--privileged&lt;/strong&gt; to avoid issues with
+SELinux.:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+docker run -dt --privileged --name rh74 --hostname rh74 -v /data:/data:rw registry.access.redhat.com/rhel7.4
+
+Or for CentOS
+
+docker run -dt --privileged --name cos77 --hostname cos77 -v /data:/data:rw docker.io/library/centos:centos7.7.1908
+
+Or for Ubuntu
+
+docker run -dt --privileged --name ub20 --hostname ub20 -v /data:/data:rw ubuntu:20.04
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Now execute bash in the running container as below (previous step
+would have put you in the container too. You need to run this only if
+you happen to exit the shell from the previous step):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+docker exec -it rh74 /bin/bash
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;You are in a bash shell! Use yum to install what ever rpms you need.
+The following yum install may fail, but you have a better chance of
+working as the docker container is close to the system that took
+coredump!:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+awk '{print $2}' dso_list &amp;gt; /tmp/rpms
+
+# edit /tmp/rpms to remove rpms that don't exist in yum repos.
+Also ganesha doesn't depend on glibc-common, so it won't be
+there in the dso_list file but will present issues with broken
+dependency. Adding the glibc-common with exact version as glibc
+needed to the /tmp/rpms will work!
+
+yum install $(cat /tmp/rpms)
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Now run gdb and install any debuginfo rpms that you need.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;And if your docker container is stopped for some reason, you can always
+restart it and then execute bash as below (nothing is lost):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+docker start rh74
+docker exec -it rh74 /bin/bash
+&lt;/pre&gt;
+</content><category term="coredump"></category><category term="coredump"></category></entry><entry><title>Building ganesha</title><link href="https://ganltc.github.io/building-ganesha.html" rel="alternate"></link><published>2019-08-22T00:00:00-05:00</published><updated>2019-08-22T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2019-08-22:/building-ganesha.html</id><summary type="html">&lt;p class="first last"&gt;Ganesha spectrum scale build instructions&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Building ganesha&lt;/h2&gt;
+&lt;p&gt;Spectrum scale ganesha rpms are built from
+&lt;a class="reference external" href="https://github.com/ganltc/nfs-ganesha.git"&gt;https://github.com/ganltc/nfs-ganesha.git&lt;/a&gt; repository.  Branch &amp;quot;ibm2.7&amp;quot;
+is based on ganesha V2.7. It is used for building spectrum scale 5.0.4
+ganesha rpms.&lt;/p&gt;
+&lt;div class="section" id="building-ibm2-7-based-rpms"&gt;
+&lt;h3&gt;Building ibm2.7 based rpms&lt;/h3&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;Install rpms needed for building ganesha&lt;/dt&gt;
+&lt;dd&gt;&lt;ul class="first last"&gt;
+&lt;li&gt;&lt;p class="first"&gt;RHEL7.x:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+yum groupinstall 'Development Tools'
+
+yum install cmake krb5-devel bison flex doxygen libuuid-devel \
+libblkid-devel libcap-devel dbus-devel python-devel libattr-devel \
+libnfsidmap-devel libwbclient-devel
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;RHEL 8, apart from above, install these as well:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+yum install libnsl2-devel python3-devel selinux-policy-devel \
+libtirpc-devel
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Install gpfs samba packages for AD kerberos support.
+Make sure you install Spectrum Scale Samba package (gpfs.smb) and its
+development package (gpfs.smb-devel). This step can be ignored if AD
+kerberos support is not needed.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;git clone, checkout ibm2.7 and checkout submodules:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git clone https://github.com/ganltc/nfs-ganesha.git
+cd nfs-ganesha
+git checkout &amp;lt;ibm2.7 or tag&amp;gt;
+git submodule update --init
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Modify GANESHA_EXTRA_VERSION string in src/CMakeLists.txt file. This
+makes it clear that these rpms are privately built! For example
+having something like this:&lt;/p&gt;
+&lt;p&gt;set(GANESHA_EXTRA_VERSION -ibm050.xyz)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make a new build directory and run cmake from there:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mkdir build &amp;amp;&amp;amp; cd build &amp;amp;&amp;amp; cmake ../src -DBUILD_CONFIG=rpmbuild \
+-DCMAKE_BUILD_TYPE=Release -DUSE_FSAL_GPFS=ON -DUSE_ADMIN_TOOLS=ON \
+-DUSE_GUI_ADMIN_TOOLS=OFF -DUSE_DBUS=ON
+&lt;/pre&gt;
+&lt;p&gt;Optionally, add &amp;quot;-D_MSPAC_SUPPORT=ON&amp;quot; for AD kerberos support!&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Verify that cmake really did what you wanted! In particular look at
+its output and verify that it honored your features FSAL_GPFS,
+ADMIN_TOOLS, DBUS and MSPAC_SUPPORT etc.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make source tarball for rpmbuild:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+make dist
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Build rpms:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+QA_RPATHS=2 rpmbuild -ta nfs-ganesha*.tar.gz
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="nfs"></category><category term="nfs"></category><category term="build"></category></entry><entry><title>Tracing nfs-ganesha daemon memory leaks with mmleak tool</title><link href="https://ganltc.github.io/tracing-nfs-ganesha-daemon-memory-leaks-with-mmleak-tool.html" rel="alternate"></link><published>2019-04-09T00:00:00-05:00</published><updated>2019-06-09T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2019-04-09:/tracing-nfs-ganesha-daemon-memory-leaks-with-mmleak-tool.html</id><summary type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Tracing nfs-ganesha daemon memory leaks with mmleak tool&lt;/h2&gt;
+&lt;p&gt;Valgrind and libasan are good tools to track memory leaks on test
+systems and developer systems, but neither is a good tool to trace
+memory leaks on production systems. The mtrace() [man 3 mtrace]
+is better equipped to be run under production …&lt;/p&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Tracing nfs-ganesha daemon memory leaks with mmleak tool&lt;/h2&gt;
+&lt;p&gt;Valgrind and libasan are good tools to track memory leaks on test
+systems and developer systems, but neither is a good tool to trace
+memory leaks on production systems. The mtrace() [man 3 mtrace]
+is better equipped to be run under production systems but unfortunately
+they don't work with multi-threaded applications. I have seen people
+using jemalloc but it seems to need some guess work.  More over, it
+will use some memory for itself and uses a completely different
+allocator.&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://github.com/malahal/mmleak"&gt;https://github.com/malahal/mmleak&lt;/a&gt; is very similar to what mtrace does
+but works with multi-threaded applications. Here are the instructions to
+use mmleak with NFS-Ganesha daemon.&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Download (git clone &lt;a class="reference external" href="https://github.com/malahal/mmleak"&gt;https://github.com/malahal/mmleak&lt;/a&gt;) mmleak project
+source code.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Run &amp;quot;make&amp;quot; to produce mmleak.so shared library for your architecture!&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Copy mmleak.so, mmleak.py and mmleak-install scripts on the target
+system&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Run &amp;quot;mmleak-install &amp;lt;dump-directory&amp;gt;&amp;quot;. This will copy mmleak.so
+to /root and updates nfs-ganesha systemd service unit file to LD_PRELOAD
+the shared library.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Restart nfs service to make use of the tool:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces service stop nfs &amp;amp;&amp;amp; mmces service start nfs
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;mmleak.so stores its dump files into the directory given to
+mmleak-install script. mmleak-&amp;lt;HOSTNAME&amp;gt;.&amp;lt;PID&amp;gt;.pid is an active log
+file used by mmleak.so.  Other dump files matching
+mmleak-&amp;lt;HOSTNAME&amp;gt;.&amp;lt;PID&amp;gt;.&amp;lt;NUM&amp;gt;.out are complete and they can be
+copied to other systems for analysis.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;The dump files generated will be big as it dumps all allocations and
+frees. Use mmleak-shrink.py script to remove the matching allocations and
+frees as below (&lt;strong&gt;note that files with .pid extension are active dump
+files in use, please don't modify or use them&lt;/strong&gt;):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+for i in mmleak*.out; do if [ ! -s $i.shrinked ]; then echo $i; mmleak-shrink.py &amp;lt; $i &amp;gt; $i.shrinked &amp;amp;&amp;amp; rm $i; fi; done
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;See mmleak project for using the shrunken files and the process maps
+file to arrive at line numbers in the source code that allocated
+memory but didn't free.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;To back out this LD_PRELOAD setup on the system:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+rm /etc/systemd/system/nfs-ganesha.service
+systemctl daemon-reload
+rm /root/mmleak.so # optional step!
+mmces service stop nfs &amp;amp;&amp;amp; mmces service start nfs
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content><category term="memory"></category><category term="mmleak"></category></entry><entry><title>Performance monitoring of NFS Ganesha</title><link href="https://ganltc.github.io/performance-monitoring-of-nfs-ganesha.html" rel="alternate"></link><published>2018-08-29T00:00:00-05:00</published><updated>2019-01-22T00:00:00-06:00</updated><author><name>Sachin Punadikar</name></author><id>tag:ganltc.github.io,2018-08-29:/performance-monitoring-of-nfs-ganesha.html</id><summary type="html">&lt;p class="first last"&gt;This article helps understand “ganesha_stats” utility and how to
+use it for performance monitoring.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;NFS server implementation is available in two kinds, kernel space (the default
+NFS server, available with almost all OS) and user space (NFS Ganesha). NFS
+Ganesha is open source community project, and available at
+&lt;a class="reference external" href="https://github.com/nfs-ganesha/nfs-ganesha"&gt;https://github.com/nfs-ganesha/nfs-ganesha&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;IBM Spectrum Scale support NFS Ganesha as the default NFS server on protocol
+nodes (or CES nodes). “ganesha_stats” utility helps in understanding NFS
+server statistics. This utility is not cluster aware and provides information
+on NFS server running on that node only.&lt;/p&gt;
+&lt;p&gt;Usage of “ganesha_stats” can be divided into 2 broad categories.&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;First category is about extracting various statistics under different heads
+like per protocol version, per export, fsal specific etc. In general these
+statistics are again grouped into 3 categories, server specific, FSAL specific
+and RPC Queue specific. For FSAL specific stats use option “fsal” and for
+RPC Queue specific statistics use &amp;quot;rpc&amp;quot;.&lt;/li&gt;
+&lt;li&gt;The second category is about managing the stats counting operations such as
+enabling/disabling/resetting etc.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;To get short information on the usage of “ganesha_stats”, pass “help” argument
+as shown below:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats help
+Command displays global stats by default.
+To display current status regarding stat counting use
+/usr/bin/ganesha_stats status
+To display stat counters use
+/usr/bin/ganesha_stats [list_clients | deleg &amp;lt;ip address&amp;gt; | inode |
+                        iov3 [export id] | iov4 [export id] | export |
+                        total [export id] | fast | pnfs [export id] |
+                        fsal &amp;lt;fsal name&amp;gt; | v3_full | v4_full | rpc | auth]
+To reset stat counters use
+/usr/bin/ganesha_stats reset
+To enable/disable stat counters use
+/usr/bin/ganesha_stats [enable | disable] [all | nfs | fsal | v3_full | v4_full | rpc |
+                        auth]
+To get the current memory pool allocation
+/usr/bin/ganesha_stats pool
+&lt;/pre&gt;
+&lt;div class="section" id="options-to-extract-stats"&gt;
+&lt;h2&gt;Options to extract stats&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;global – this is the default option, if no argument is passed. This option&lt;/dt&gt;
+&lt;dd&gt;provides a global view of NFS server operation statistics related
+to different protocol versions.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;list_clients – this option provides information about all connected clients&lt;/dt&gt;
+&lt;dd&gt;and also mentions whether per protocol are there any stats available or not&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;deleg – this option provides information on delegations related to the&lt;/dt&gt;
+&lt;dd&gt;specified client. This option needs additional argument specifying the
+client IP address. Delegations are not supported by NFS Ganesha on Spectrum
+Scale.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;inode – this option provides information on caching done by NFS Ganesha. The&lt;/dt&gt;
+&lt;dd&gt;information includes cache hit, miss, conflict etc.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;iov3 – This option provides information on NFSv3 related stats. If NFSv3&lt;/dt&gt;
+&lt;dd&gt;stats are available for an export, it provides details such as number
+requests, number of errors, latency etc.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;iov4 - This option provides information on NFSv4 related stats. If NFSv3&lt;/dt&gt;
+&lt;dd&gt;stats are available for an export, it provides details such as number
+requests, number of errors, latency etc.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;export – this option provide information on the exports defined. Export id,&lt;/dt&gt;
+&lt;dd&gt;export path, whether the export has any stats related to various protocols
+like NFSv3, NFSv4, NLM, 9P etc.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;total – this option provides information on all exports and provides number&lt;/dt&gt;
+&lt;dd&gt;of operations done per protocol version (NFSV3, NFSv40, NFSv41 etc)&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;fast – this option provides operations count per type of operation per&lt;/dt&gt;
+&lt;dd&gt;protocol for the server.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;pnfs – this option provides NFSv4.1 specific statistics. NFSv4.1 is not&lt;/dt&gt;
+&lt;dd&gt;supported by NFS Ganesha on Spectrum Scale.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;fsal – this option provides information about FSAL specific stats counting.&lt;/dt&gt;
+&lt;dd&gt;This option requires additional parameter, which is FSAL name (e.g. gpfs).
+FSAL specific stats counting is disabled by default.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;v3_full – this option provides statistics of all NFSv3 operations. &amp;quot;v3_full&amp;quot;&lt;/dt&gt;
+&lt;dd&gt;stats counting is disabled by default.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;v4_full – this option provides statistics of all NFSv4 operations (including&lt;/dt&gt;
+&lt;dd&gt;all minor versions of NFSv4). &amp;quot;v4_full&amp;quot; stats counting is disabled by
+default.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;rpc – this option provides information about RPC queue related stats. RPC&lt;/dt&gt;
+&lt;dd&gt;Queue specific stats counting is disabled by default.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;auth – this option provides information about authentication related stats&lt;/dt&gt;
+&lt;dd&gt;for winbind and group cache. &amp;quot;auth&amp;quot; stats counting is disabled by default.
+This is available starting from Spectrum Scale 5.0.4 release.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="options-to-manage-stats-counting"&gt;
+&lt;h2&gt;Options to manage stats counting&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;help – this argument provides short help in “Ganesha_stats” utility.&lt;/li&gt;
+&lt;li&gt;status – this option provides information about what all stats counting is
+enabled and since when. The different types of stats counting possible are
+nfs server, FSAL specific (fsal), v3_full, v4_full and RPC Queue (rpc)&lt;/li&gt;
+&lt;li&gt;reset – this option helps in resetting all the stats counters (NFS serevr,
+FSAL specific, v3_full, v4_full &amp;amp; RPC Queue specific) to 0. This is helpful
+in case one wants to check the performance for a specific run.&lt;/li&gt;
+&lt;li&gt;enable/disable – these 2 options helps in dynamically enabling or disabling
+stats counting. Both options requires additional argument specifying which
+stats counting needs to be enabled/disabled. The valid options are NFS server
+(nfs), FSAL specific (fsal), NFSv3 full (v3_full), NFSv4 full (v4_full), RPC
+Queue Specific (rpc) or all.&lt;/li&gt;
+&lt;li&gt;pool – this option is for getting information on various memory pool
+allocations. This is useful in understanding the current memory allocation in
+Ganesha (only via memory pools).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="steps-to-monitor-the-performance"&gt;
+&lt;h2&gt;Steps to monitor the performance:&lt;/h2&gt;
+&lt;p&gt;Below procedure is required to be executed on all protocol (CES) node&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;To begin with, first enable stats counting for FSAL, RPC Queue (it is disabled by default):&lt;/dt&gt;
+&lt;dd&gt;# ganesha_stats enable all&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;Before going to start the tests, make all the counters zero.&lt;/dt&gt;
+&lt;dd&gt;# ganesha_stats reset&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class="first docutils"&gt;
+&lt;dt&gt;Start the tests. And periodically collect below stats on every node. (say for every 30 min run all commands &amp;amp; collect the o/p in a file)&lt;/dt&gt;
+&lt;dd&gt;&lt;ol class="first last loweralpha"&gt;
+&lt;li&gt;# ganesha_stats fsal gpfs&lt;/li&gt;
+&lt;li&gt;# ganesha_stats v3_full&lt;/li&gt;
+&lt;li&gt;# ganesha_stats v4_full&lt;/li&gt;
+&lt;li&gt;# ganesha_stats rpc&lt;/li&gt;
+&lt;li&gt;# ganesha_stats reset  &amp;lt;= Make all counters 0&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="section" id="few-examples"&gt;
+&lt;h3&gt;Few Examples:&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;Checking current status of various stats counting:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  status
+Stats counting for NFS server is enabled since:
+        Thu Aug 23 00:40:19 2018658522215 nsecs
+Stats counting for FSAL is currently disabled
+Stats counting for RPC is currently disabled
+Stats counting for v3_full is currently disabled
+Stats counting for v4_full is currently disabled
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Enabling fsal specific stats:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  enable fsal
+Successfully enabled statistics counting
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Enabling RPC Queue specific stats:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  enable rpc
+Successfully enabled statistics counting
+
+# ganesha_stats  status
+Stats counting for NFS server is enabled since:
+        Thu Aug 23 00:40:19 2018658522215 nsecs
+Stats counting for FSAL is enabled since:
+        Thu Aug 23 00:43:53 2018326619720 nsecs
+Stats counting for RPC is enabled since:
+        Thu Aug 23 00:44:12 201879056004 nsecs
+Stats counting for v3_full is currently disabled
+Stats counting for v4_full is currently disabled
+&lt;/pre&gt;
+&lt;p&gt;&lt;em&gt;Additional examples:&lt;/em&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  enable all
+Successfully enabled statistics counting
+
+# ganesha_stats status
+Stats counting for NFS server is enabled since:
+        Tue Jan 22 04:33:24 2019617715043 nsecs
+Stats counting for FSAL is enabled since:
+        Tue Jan 22 04:35:21 2019179381497 nsecs
+Stats counting for RPC is enabled since:
+        Tue Jan 22 04:35:24 2019255547453 nsecs
+Stats counting for v3_full is enabled since:
+        Tue Jan 22 04:37:09 2019256784851 nsecs
+Stats counting for v4_full is enabled since:
+        Tue Jan 22 04:37:09 2019256794253 nsecs
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Disabling stats (various examples):&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  disable fsal
+Successfully disabled statistics counting
+
+# ganesha_stats  disable rpc
+Successfully disabled statistics counting
+
+# ganesha_stats status
+Stats counting for NFS server is enabled since:
+        Tue Jan 22 04:33:24 2019617715043 nsecs
+Stats counting for FSAL is currently disabled
+Stats counting for RPC is currently disabled
+Stats counting for v3_full is enabled since:
+        Tue Jan 22 04:37:09 2019256784851 nsecs
+Stats counting for v4_full is enabled since:
+        Tue Jan 22 04:37:09 2019256794253 nsecs
+
+# ganesha_stats  disable nfs
+Successfully disabled statistics counting
+
+# ganesha_stats status
+Stats counting for NFS server is currently disabled
+Stats counting for FSAL is currently disabled
+Stats counting for RPC is currently disabled
+Stats counting for v3_full is currently disabled
+Stats counting for v4_full is currently disabled
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Extracting protocol version specific stats:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats v3_full
+NFSv3 Detailed statistics
+Timestamp: Mon Jan 28 02:29:07 2019127096098 nsecs
+
+Operation Details                         |  Operation Latency                     |  Queue Latency
+==========================================|========================================|=======================================
+Name            Total     Error      Dups |       Avg          Min           Max   |      Avg          Min           Max
+GETATTR            38         0         0 |     0.025362     0.010524     0.062460 |     0.018227     0.010014     0.026622
+SETATTR            10         0         0 |     1.288499     0.037150     5.801209 |     0.014868     0.009758     0.019687
+LOOKUP             16         0         0 |     0.065190     0.022066     0.134778 |     0.015255     0.009498     0.021964
+ACCESS             18         0         0 |     0.040911     0.012051     0.107734 |     0.018004     0.009885     0.042911
+READLINK            2         0         0 |     0.023475     0.023355     0.023596 |     0.017976     0.017347     0.018606
+READ                1         0         0 |     0.120613     0.120613     0.120613 |     0.010775     0.010775     0.010775
+WRITE               3         0         0 |     3.476515     0.943374     8.482333 |     0.015313     0.009988     0.019987
+CREATE              6         0         0 |    11.567501     0.875509    30.555752 |     0.017923     0.009620     0.036535
+REMOVE              5         0         0 |     1.005996     0.746162     1.141283 |     0.015108     0.009572     0.016710
+RENAME              1         0         0 |     2.538460     2.538460     2.538460 |     0.017815     0.017815     0.017815
+READDIRPLUS         5         0         0 |     0.281475     0.081980     0.905870 |     0.015604     0.011688     0.019417
+FSINFO              2         0         0 |     0.027047     0.012406     0.041689 |     0.010651     0.009803     0.011498
+PATHCONF            1         0         0 |     0.015112     0.015112     0.015112 |     0.010001     0.010001     0.010001
+
+# ganesha_stats v4_full
+NFSv4 Detailed statistics
+Timestamp: Mon Jan 28 02:15:55 2019730861583 nsecs
+
+Operation Details                |  Operation Latency                     |  Queue Latency
+=================================|========================================|=======================================
+Name            Total     Error  |       Avg          Min           Max   |      Avg          Min           Max
+ACCESS              9         0 |     1.651072     0.020832    13.459373 |     0.020437     0.010946     0.061527
+CLOSE               8         0 |     0.062840     0.041341     0.133258 |     0.016127     0.011833     0.019749
+GETATTR           105         0 |     4.871099     0.020337   240.538668 |     0.017594     0.009267     0.061527
+GETFH              13         0 |    23.957723     0.037377   240.525346 |     0.014735     0.010946     0.017215
+LOOKUP              9         4 |     5.350111     0.035836    47.339675 |     0.016598     0.011479     0.028909
+OPEN               10         2 |    26.402119     0.071451   240.520741 |     0.015650     0.010946     0.017569
+OPEN_CONFIRM         1         0 |     0.043296     0.043296     0.043296 |     0.017917     0.017917     0.017917
+PUTFH             129         0 |     0.022270     0.011216     0.056945 |     0.017441     0.009267     0.061527
+READ                1         0 |     0.072095     0.072095     0.072095 |     0.009897     0.009897     0.009897
+READDIR             7         0 |    53.390574     0.049417   371.719512 |     0.018707     0.010025     0.039433
+READLINK            2         0 |     0.046855     0.045692     0.048018 |     0.014764     0.011391     0.018138
+REMOVE              5         0 |    36.401128     0.745786   146.347221 |     0.015334     0.011325     0.019788
+RENAME              1         0 |   180.708608   180.708608   180.708608 |     0.011648     0.011648     0.011648
+RENEW               2         0 |     0.024271     0.021181     0.027362 |     0.016085     0.015863     0.016308
+SAVEFH              1         0 |     0.024527     0.024527     0.024527 |     0.011648     0.011648     0.011648
+SETATTR             9         0 |    15.815532     0.969664    38.574486 |     0.016131     0.010168     0.020155
+WRITE               3         0 |    17.976211     8.583815    23.993364 |     0.014148     0.010053     0.017343
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Extracting fsal specific stats (considering fsal stats counting already enabled):&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats fsal gpfs
+Timestamp: Thu Aug 23 00:37:14 2018554766976 nsecs
+FSAL Name - GPFS
+FSAL Stats (response time in milliseconds):
+        Op-Name         Total     Res:Avg         Min           Max
+NAME_TO_HANDLE             45     0.037271     0.001532     1.460589
+OPEN_BY_HANDLE             57     1.226331     0.005179    59.483080
+GET_XSTAT                 436     0.027083     0.001211     9.457173
+SET_XSTAT                  12     5.177517     0.836911    20.598806
+CLOSE_FILE                 10     0.014505     0.006658     0.064869
+RENAME_BY_FH                1    85.685211    85.685211    85.685211
+STAT_BY_NAME                6     0.007922     0.006331     0.011113
+UNLINK_BY_NAME              5     5.621457     1.163010    12.988609
+CREATE_BY_NAME              5    30.377444     1.020835   101.153596
+READ_BY_FD                  2     0.015599     0.012296     0.018902
+WRITE_BY_FD                 3    11.512359     1.477251    28.555763
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Extracting Getting RPC Queue specific stats (assuming it is already enabled):&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats rpc
+Timestamp: Mon Jan 28 02:16:51 2019898043588 nsecs
+
+RPC Receive Queue Statistics (4 Queues):
+    Pending Requests   :         0
+    Completed Requests :       132
+ QueueName       Pending  Complete      Avg wait      Max wait  (Milliseconds)
+REQ_Q_MOUNT                0         0      0.000000      0.000000
+REQ_Q_CALL                 0         0      0.000000      0.000000
+REQ_Q_LOW_LATENCY          0       107      0.015309      0.059700
+REQ_Q_HIGH_LATENCY         0        25      0.013215      0.023032
+
+
+RPC Send Queue Status (Milliseconds):
+    RPCs sent -              132
+    Avg wait time -     0.000405
+    Max wait time -     0.000944
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Extracting Authentication related stats (assuming it is already enabled):&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats auth
+Timestamp: Thu May 16 13:41:58 2019870093583 nsecs
+Authentication related stats
+
+Group Cache
+Total ops: 4
+Ave Latency: 0.8792455
+Max Latency: 1.463887
+Min Latency: 0.093453
+
+Winbind
+Total ops: 44
+Ave Latency: 10.7604362955
+Max Latency: 206.015097
+Min Latency: 0.142931
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;Resetting the stats:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# ganesha_stats  reset
+Successfully resetted statistics counters
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="nfs"></category><category term="nfs"></category><category term="performance"></category></entry><entry><title>Data collection for NFS Ganesha hang or performance issue</title><link href="https://ganltc.github.io/data-collection-for-nfs-ganesha-hang-or-performance-issue.html" rel="alternate"></link><published>2018-07-04T00:00:00-05:00</published><updated>2018-07-04T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2018-07-04:/data-collection-for-nfs-ganesha-hang-or-performance-issue.html</id><summary type="html">&lt;p class="first last"&gt;Data collection for NFS Ganesha hang or performance issue&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;If NFS clients become very slow or applications hang with files on NFS
+mount, it is likely that the NFS server isn't responding or isn't
+responding quick enough! An NFS server talks to various other software
+components (authentication, back end file system etc), it is possible
+that some other components might contribute to slowness but a hang is
+something that is likely to be in NFS server itself. The following data
+capture steps help identify if the observed problem is a performance
+issue or a hang condition.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect below data periodically on every CES node. These produce
+output, so please append the data to filenames of your choice. Adding
+a timestamp using &amp;quot;date&amp;quot; command is also preferred as given below for
+some commands (others have their own timestamp!).  These can be run
+every 5 minutes or less. This data collection should be started before
+the problem is observed.&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Extract GPFS stats and reset them for the next collection:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmfsadm vfsstats show  &amp;amp;&amp;amp; mmfsadm vfsstats reset
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect Ganesha stats:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_stats fast # For request stats
+ganesha_stats iov3 # For NFSv3 read/write stats
+ganesha_stats iov4 # For NFSv4 read/write stats
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Number of file descriptors opened by Ganesha server (&lt;strong&gt;use the actual PID of Ganesha process&lt;/strong&gt;):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sh -c 'date &amp;amp;&amp;amp; ls /proc/&amp;lt;PID-of-Ganesha-process&amp;gt;/fd | wc -l'
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Top 10 processes using the most amount of memory:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sh -c 'date &amp;amp;&amp;amp; ps aux --sort -rss | head'
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Free memory in the system:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sh -c 'date &amp;amp;&amp;amp; free -m'
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;When the problem is observed with a CES node, collect this information on
+the CES node:&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect netstat output:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sh -c 'date &amp;amp;&amp;amp; netstat -an'
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect NFS-Ganesha kernel thread stacks:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sh -c 'date &amp;amp;&amp;amp; for i in /proc/&amp;lt;PID-of-Ganesha-process&amp;gt;/task/*; do echo &amp;quot;===$i====&amp;quot;; cat $i/stack; done'
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Enable Ganesha tracing (messages go to /var/log/ganesha.log):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+ganesha_mgr set_log COMPONENT_ALL FULL_DEBUG
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Enable GPFS tracing:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+With at least vnode level 4 ??
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect kernel thread stacks:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmdumpkthreads
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect tcpdump at client &amp;amp; server for 5 minutes after enabling
+Ganesha and GPFS traces. Always collect tcpdump in pcap format by
+providing -w option to tcpdump command.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Collect coredump by sending SIGABORT signal to ganesha process,
+make sure you setup your CES nodes to collect NFS-Ganesha coredumps
+first though. See &lt;a class="reference external" href="https://ganltc.github.io/setup-to-take-ganesha-coredumps.html"&gt;Setup to take ganesha coredumps&lt;/a&gt; for more details.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</content><category term="nfs"></category><category term="nfs"></category></entry><entry><title>Create source code corresponding to a given rpm version</title><link href="https://ganltc.github.io/create-source-code-corresponding-to-a-given-rpm-version.html" rel="alternate"></link><published>2018-05-08T00:00:00-05:00</published><updated>2018-05-08T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2018-05-08:/create-source-code-corresponding-to-a-given-rpm-version.html</id><summary type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Create source code corresponding to a given rpm version&lt;/h2&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Use git clone to clone the NFS-Ganesha software:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git clone https://github.com/ganltc/nfs-ganesha.git
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Go into the base directory of the git repo:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+cd nfs-ganesha
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Use rpm command to get NFS-Ganesha package version, for example:&lt;/p&gt;
+&lt;p&gt;On one system:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpm …&lt;/pre&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Create source code corresponding to a given rpm version&lt;/h2&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Use git clone to clone the NFS-Ganesha software:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git clone https://github.com/ganltc/nfs-ganesha.git
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Go into the base directory of the git repo:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+cd nfs-ganesha
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Use rpm command to get NFS-Ganesha package version, for example:&lt;/p&gt;
+&lt;p&gt;On one system:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpm -qa | grep nfs-ganesha
+nfs-ganesha-debuginfo-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-gpfs-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-utils-2.5.3-ibm015.03.el7.centos.x86_64
+&lt;/pre&gt;
+&lt;p&gt;On another system:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpm -qa|grep nfs-ganesha
+nfs-ganesha-2.3.2-0.ibm53.el7.x86_64
+nfs-ganesha-gpfs-2.3.2-0.ibm53.el7.x86_64
+nfs-ganesha-utils-2.3.2-0.ibm53.el7.x86_64
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;The git tags that created the above packages should be &lt;strong&gt;V2.5.3-ibm015.03&lt;/strong&gt;
+on the first system and &lt;strong&gt;V2.3.2-ibm53&lt;/strong&gt; on the second system.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;The first 3 version numbers (2.5.3 or 2.3.2) followed by the package name
+indicate that these packages are based on the upstream NFS-Ganesha
+version 2.5.3 and NFS-Ganesha version 2.3.2&lt;/em&gt; respectively.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;The string &amp;quot;-ibm&amp;quot; to all the way to &amp;quot;.el7&amp;quot; is added by IBM packaging.
+The tag is &amp;quot;Vx.y.z-&amp;lt;ibm-added-string&amp;gt;&amp;quot;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Find the exact tag from the git repo:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+$ git tag | grep ibm015.03
+V2.5.3-ibm015.03
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Check out the above tag's source code with a local branch name same as the
+tag itself:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git checkout -b V2.5.3-ibm015.03 V2.5.3-ibm015.03
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Checkout libntirpc source code (used by NFS-Ganesha) as well:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git submodule update --init
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Now you should have the source code. All the source code is in &amp;quot;src&amp;quot;
+directory.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content><category term="git"></category><category term="source"></category></entry><entry><title>Source code Repository maintenance</title><link href="https://ganltc.github.io/source-code-repository-maintenance.html" rel="alternate"></link><published>2018-03-23T00:00:00-05:00</published><updated>2019-07-19T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2018-03-23:/source-code-repository-maintenance.html</id><summary type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Source code Repository maintenance&lt;/h2&gt;
+&lt;p&gt;Since ganesha V2.7 is actively maintained upstream, &amp;quot;ibm2.7&amp;quot; branch
+uses rebase to easily identify our patches that are NOT in upstream yet.
+It also uses 'merge' strategy to make sure we don't modify the history
+and can get back to any old tags that …&lt;/p&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="id1"&gt;
+&lt;h2&gt;Source code Repository maintenance&lt;/h2&gt;
+&lt;p&gt;Since ganesha V2.7 is actively maintained upstream, &amp;quot;ibm2.7&amp;quot; branch
+uses rebase to easily identify our patches that are NOT in upstream yet.
+It also uses 'merge' strategy to make sure we don't modify the history
+and can get back to any old tags that we built in the past. It uses the
+strategy outlined here at &lt;a class="reference external" href="http://fanf.livejournal.com/128282.html"&gt;http://fanf.livejournal.com/128282.html&lt;/a&gt;, Use
+git-repub.sh script from
+&lt;a class="reference external" href="https://git.csx.cam.ac.uk/x/ucs/git/git-repub.git"&gt;https://git.csx.cam.ac.uk/x/ucs/git/git-repub.git&lt;/a&gt; while merging.&lt;/p&gt;
+&lt;p&gt;These are the steps we follow for updating ibm2.7 branch.&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make sure you have the latest changes from the ganltc remote as well
+as the upstream repo.  Assuming that &amp;quot;ganltc&amp;quot; remote points to
+&lt;a class="reference external" href="https://github.com/ganltc/nfs-ganesha.git"&gt;https://github.com/ganltc/nfs-ganesha.git&lt;/a&gt; and &amp;quot;origin&amp;quot; points to
+&lt;a class="reference external" href="https://github.com/nfs-ganesha/nfs-ganesha.git"&gt;https://github.com/nfs-ganesha/nfs-ganesha.git&lt;/a&gt;:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git fetch ganltc &amp;amp;&amp;amp; git fetch origin
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Create the deployment branch &amp;quot;ibm2.7&amp;quot;:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git checkout -b ibm2.7 ganltc/ibm2.7
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Create a working branch from ibm2.7 from the merge commit's second
+parent:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git checkout -b working ganltc/ibm2.7^2
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Perform one of the following steps&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;If we are rebasing on top of the latest V2.7-stable, update the
+checked out working branch by rebasing our patches with the latest
+V2.7-stable. Note that the version patch always fails to merge.
+Fix the version and &lt;strong&gt;modify the version commit message&lt;/strong&gt; to reflect
+the new version!:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git rebase origin/next
+git commit -a --amend # to fix version commit message
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;If we want to add some extra patches, just add them using &amp;quot;git
+cherry-pick&amp;quot; and &lt;strong&gt;create a new version patch and remove the old
+version patch&lt;/strong&gt;:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git cherry-pick -x &amp;lt;commit1&amp;gt;
+git cherry-pick -x &amp;lt;commit2&amp;gt;
+git rebase -i &amp;lt;deep-enough-commit&amp;gt; to reorder and edit the old version
+    commit to the top and then modify src/CMakeLists.txt and
+    debian/changelog files appropriately with a new version.
+git commit -a --amend # to modify the version commit
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;At this point, your working branch has all the patches you need in
+a linear history, no merge commits etc. It should have the version
+commit at the top. This is ready for testing. Run cthon/pynfs with
+this 'working' branch.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Use git-repub.sh script to merge (this is due to lack of gits &amp;quot;-s
+theirs&amp;quot; merge strategy option):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git-repub.sh --rw working --ff ibm2.7
+
+The above command may need --force option in case your deployment
+branch ibm2.7 is getting prepared for the first time!
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make sure that the deployment branch &amp;quot;ibm2.7&amp;quot; has merge commit as its HEAD:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+gitk ibm2.7 OR &amp;quot;git cat-file -p ibm2.7 | grep ^parent&amp;quot;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Make sure that the deployment branch and the working branch have the
+same exact code (no diff output is expected!):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git diff ibm2.7 working
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Checkout the deployment branch &amp;quot;ibm2.7&amp;quot;:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+git checkout ibm2.7
+git tag -s &amp;lt;tag&amp;gt;
+git push ganltc ibm2.7
+git push ganltc &amp;lt;tag&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content><category term="git"></category><category term="git"></category></entry><entry><title>NFS Ganesha configuration on Spectrum Scale</title><link href="https://ganltc.github.io/nfs-ganesha-configuration-on-spectrum-scale.html" rel="alternate"></link><published>2018-02-14T00:00:00-06:00</published><updated>2020-03-10T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2018-02-14:/nfs-ganesha-configuration-on-spectrum-scale.html</id><summary type="html">&lt;p class="first last"&gt;NFS Ganesha configuration on Spectrum Scale&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Spectrum Scale protocol software provides a cool CLI tool (there is a
+GUI as well!) to configure NFS Ganesha configuration. It actually
+changes shared cluster configuration (to make sure all protocol nodes in
+the cluster will have the same NFS Ganesha configuration) and restarts
+or updates Ganesha daemon to make the changes effective. Careful as it
+might restart Ganesha daemon. See &lt;strong&gt;man mmnfs&lt;/strong&gt; for details.&lt;/p&gt;
+&lt;div class="section" id="manual-method"&gt;
+&lt;h2&gt;Manual method&lt;/h2&gt;
+&lt;p&gt;Tools are good as long as they do what you want! Sometimes you may need
+to go beyond a tool's capability! One example is that you want to change
+an NFS Ganesha configuration parameter but that parameter is not
+supported by mmnfs.  You have been warned that this is not an approved
+procedure at the time of this writing. Make sure that the parameter you
+are going to change is supported by the Ganesha daemon you are using!&lt;/p&gt;
+&lt;div class="section" id="changing-var-mmfs-ces-nfs-config-gpfs-ganesha-export-conf"&gt;
+&lt;h3&gt;1. Changing /var/mmfs/ces/nfs-config/gpfs.ganesha.export.conf&lt;/h3&gt;
+&lt;p&gt;Luckily, you get a semi-automated way to modify the export configuration file!
+Copy your existing export configuration file, preferably into /tmp, and
+modify the way you want it. To save your export configuration into CCR
+and restart NFS services automatically, execute the following command:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmnfs export load /tmp/gpfs.ganesha.export.conf
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="changing-var-mmfs-ces-nfs-config-gpfs-ganesha-main-conf-file"&gt;
+&lt;h3&gt;2. Changing /var/mmfs/ces/nfs-config/gpfs.ganesha.main.conf file&lt;/h3&gt;
+&lt;p&gt;There is no &amp;quot;mmnfs config load &amp;lt;load-file&amp;gt;&amp;quot;, likely due to &amp;quot;mmnfs
+config&amp;quot; dealing with main.conf and log.conf, so we use &amp;quot;mmccr fput&amp;quot;
+command to change the main configuration file.&lt;/p&gt;
+&lt;p&gt;As an example, the following steps can be used to change
+&lt;strong&gt;chunks_hwmark&lt;/strong&gt; parameter which tries to limit the total number of
+chunk objects used in nfs-ganesha daemon. The default is 100,000 and the
+following will change it to one million (1,000,000)&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Find the block in the file this parameter belongs to.
+&lt;strong&gt;chunks_hwmark&lt;/strong&gt; should be in &lt;strong&gt;CacheInode&lt;/strong&gt; block.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Copy /var/mmfs/ces/nfs-config/gpfs.ganesha.main.conf file into /tmp
+and modify the /tmp/gpfs.ganesha.main.conf file. Add
+&amp;quot;chunks_hwmark = 1000000;&amp;quot; to &lt;strong&gt;CacheInode&lt;/strong&gt; block:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+CacheInode
+{
+        fd_hwmark_percent=60;
+        fd_lwmark_percent=20;
+        fd_limit_percent=90;
+        lru_run_interval=30;
+        entries_hwmark=1500000;
+        chunks_hwmark=1000000;
+}
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Push the changed file to CCR:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmccr fput gpfs.ganesha.main.conf /tmp/gpfs.ganesha.main.conf
+&lt;/pre&gt;
+&lt;p&gt;This puts the last argument which should be a real file in your file
+system into CCR as gpfs.ganesha.main.conf file.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Above step should restart NFS Ganesha service on all protocol nodes.
+If this didn't happen for some reason, you can manually restart NFS
+service on all protocol nodes as below):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces service stop nfs -a &amp;amp;&amp;amp; mmces service start nfs -a
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="nfs"></category><category term="nfs config"></category></entry><entry><title>NFS Ganesha upgrade instructions</title><link href="https://ganltc.github.io/nfs-ganesha-upgrade-instructions.html" rel="alternate"></link><published>2018-01-25T00:00:00-06:00</published><updated>2018-01-25T00:00:00-06:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2018-01-25:/nfs-ganesha-upgrade-instructions.html</id><summary type="html">&lt;p class="first last"&gt;NFS-Ganesha upgrade instructions&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;The following steps need to be carried out on each node where you want to
+upgrade NFS Ganesha:&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Issue the following command to suspend the node:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces node suspend -N &amp;lt;Node&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Issue the following command to stop NFS services on the node:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces service stop nfs -N &amp;lt;Node&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Issue the following command to upgrade NFS packages on the node:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+rpm -Uvh &amp;lt;all-needed-nfs-ganesha-rpms&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Issue the following command to start NFS services on the node:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces service start nfs -N &amp;lt;Node&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Issue the following command to resume the node:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+mmces node resume -N &amp;lt;Node&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</content><category term="nfs"></category><category term="nfs"></category></entry><entry><title>Problem Determination Guide for Spectrum Scale NFS-Ganesha</title><link href="https://ganltc.github.io/problem-determination-guide-for-spectrum-scale-nfs-ganesha.html" rel="alternate"></link><published>2017-09-22T00:00:00-05:00</published><updated>2018-07-16T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2017-09-22:/problem-determination-guide-for-spectrum-scale-nfs-ganesha.html</id><summary type="html">&lt;p class="first last"&gt;NFS-Ganesha problem determination.&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="installation-issues"&gt;
+&lt;h2&gt;Installation issues&lt;/h2&gt;
+&lt;p&gt;NFS-Ganesha project uses libntirpc as a subproject. We currently ship
+libntirpc library code as part of the NFS-Ganesha packages. Redhat ships
+libntirpc and NFS-Ganesha packages separately. If you already installed
+libntirpc packages from EPEL repository, you will have same files conflicting
+from IBM supplied NFS-Ganesha packages. Please remove existing libntirpc
+packages or de-activate yum/dnf repository supplying libntirpc package.&lt;/p&gt;
+&lt;p&gt;Other than the above issue, there shouldn't be any issues as long as you
+installed on supported distributions!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="starting-nfs-ganesha-service"&gt;
+&lt;h2&gt;Starting NFS-Ganesha service&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;If you are unable to start nfs-ganesha service ganesha.log
+(preferably with FULL_DEBUG mode) and syslog will provide us the most
+valuable information.&lt;/strong&gt; Here are some common issues:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;strong&gt;SELinux&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;SELinux in some Linux distros prevents NFS-Ganesha daemon
+(/usr/bin/ganesha.nfsd) to open /dev/ss0 which is required for exporting
+any GPFS file system exports.  SELinux also prevents NFS-Ganesha daemon
+reading its own configuration files! See NFS-Ganesha log for exact failure
+case.&lt;/p&gt;
+&lt;p&gt;You need to disable SELinux or teach SELinux to allow ganesha.nfsd
+daemon to open the /dev/ss0 character special file.&lt;/p&gt;
+&lt;ol class="arabic simple" start="2"&gt;
+&lt;li&gt;&lt;strong&gt;Port already in use&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Historically, all NFS servers use port 2049 for NFS protocol (it is also
+required for NFSv4). So you can't run two NFS servers at the same time.
+You may have another instance of NFS-Ganesha daemon already running or it is
+also possible that Linux kernel NFS server is started with or without
+your knowledge!&lt;/p&gt;
+&lt;p&gt;&amp;quot;systemctl mask nfs-server&amp;quot; would be better way to ensure that you don't
+get linux kernel NFS server running!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="issues-mounting-exports-from-nfs-clients"&gt;
+&lt;h2&gt;Issues mounting exports from NFS clients&lt;/h2&gt;
+&lt;p&gt;If you have NFS-Ganesha server running, but unable to mount an export
+that you think you should. &lt;strong&gt;Network trace is your best friend here. Actually
+network trace is your best friend for any problem post start up!&lt;/strong&gt; Here
+goes a list of issue you may encounter:&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;&lt;strong&gt;NFSv3 mount failure due to portmapper&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Portmapper (mapping of services to ports) service runs at port 111.
+Your client will send GETPORT request for mountd service to get the
+mountd port number on the NFS server node. NFS mount will fail if
+your server doesn't return mountd port for one reason or the other. A
+classic case is that you start Linux kernel NFS server after starting
+NFS-Ganesha server. The Linux kernel NFS server will register it own
+mountd port overwriting NFS-Ganesha mountd port.  Eventually, the
+Linux kernel NFS server will fail to come up as it can't bind to 2049
+NFS port, but the damage has already been done.&lt;/p&gt;
+&lt;p&gt;Run &amp;quot;systemctl status nfs-server&amp;quot; and &amp;quot;systemctl status nfs-ganesha&amp;quot;
+and see how and when they are started. &amp;quot;rpcinfo -p&amp;quot; gives the port
+numbers registered with portmapper. &amp;quot;lsof -i :&amp;lt;port&amp;gt;&amp;quot; or &amp;quot;ss -nlp |
+grep &amp;lt;port&amp;gt;&amp;quot; gives the current process on the system using the port.
+If you don't get correct process, then it could be owned by a kernel
+thread!&lt;/p&gt;
+&lt;p&gt;The best way to guard against accidental start up of Linux kernel NFS server
+is to mask the service.  You can also disable it but then someone could
+accidentally start it, so we prefer to mask the Linux kernel NFS service
+(&lt;tt class="docutils literal"&gt;systemctl mask &lt;span class="pre"&gt;nfs-server&lt;/span&gt;&lt;/tt&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;** security settings **&lt;/p&gt;
+&lt;p&gt;NFV4 is affected more than NFSv3 due to NFSv4 pseudo traversal. If /A
+is exported with 'krb5' only authentication and subdirectory /A/B is
+exported with 'SYS' only authentication, mount of '/A/B' would fail
+unless the NFS client tries krb5 for /A and then 'SYS' for /A/B.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="nfs-client-or-application-hang-due-to-nlm-locks"&gt;
+&lt;h2&gt;NFS client or application hang due to NLM locks&lt;/h2&gt;
+&lt;p&gt;Linux NFS client and kernel NFS server use the same network lock
+manager.  NFS-Ganesha has its own network lock manager. This means we
+can't have Linux NFS client with an NFSv3 mount and NFS-Ganesha running
+at the same time. If you mount an NFS export with NFSv3 on the node
+running NFS-Ganesha it would take NLM port preventing NFS-Ganesha
+servicing any NLM requests.&lt;/p&gt;
+&lt;p&gt;Ganesha registers only version 4 NLM for tcp and udp. So you only see two
+nlockmgr lines in &amp;quot;rcpinfo -p&amp;quot; output:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpcinfo -p | grep lockmgr
+   100021    4   udp  50836  nlockmgr
+   100021    4   tcp  33448  nlockmgr
+&lt;/pre&gt;
+&lt;p&gt;The Linux kernel lock manager would register NLM for versions 1, 3 and
+4.  A typical output will have 6 entries as below:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpcinfo -p | grep lockmgr
+   100021    1   udp  53568  nlockmgr
+   100021    3   udp  53568  nlockmgr
+   100021    4   udp  53568  nlockmgr
+   100021    1   tcp  32770  nlockmgr
+   100021    3   tcp  32770  nlockmgr
+   100021    4   tcp  32770  nlockmgr
+&lt;/pre&gt;
+&lt;p&gt;&amp;quot;tcpdump&amp;quot; trace would show all NLM requests getting rejects with the
+following as kernel NLM client would only know how to make requests
+(not reponses!):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Message Type: Reply (1)
+[Program: NLM (100021)]
+[Program Version: 4]
+[Procedure: LOCK (2)]
+Reply State: denied (1)
+[This is a reply to a request in frame 19]
+[Time from request: 0.000102000 seconds]
+Reject State: AUTH_ERROR (1)
+Auth State: bad credential (seal broken) (1)
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="throttling-log-messages"&gt;
+&lt;h2&gt;Throttling log messages&lt;/h2&gt;
+&lt;p&gt;Some NFS-Ganesha threads read socket data, prepare protocol requests
+with the help of other threads, and then place the requests in request
+queues. NFS-Ganesha worker threads dequeue such requests from the
+request queues for processing. If NFS-Ganesha worker threads are slow in
+processing, the request queues get larger and larger. Instead of
+allowing more and more requests from the NFS clients, the socket reading
+threads throttle reading socket data there by throttling NFS clients
+sending NFS requests.&lt;/p&gt;
+&lt;p&gt;NFS-Ganesha logs the following messages when request queue lengths hit
+the configured levels. The first message indicates the global counter
+(total requests from all sockets) reaching its limit, so all sockets are
+throttled. The second message indicates a given transport reaching its
+configured limit and throttles only the corresponding transport:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+2016-11-01 19:48:01 : epoch 000b0042 : localhost : ganesha.nfsd-16645[disp] nfs_rpc_getreq_ng :DISP :EVENT :global outstanding&amp;nbsp;reqs quota exceeded (have 5008, allowed 5000)
+
+2017-12-21 01:55:41 : epoch 00060217 : localhost : ganesha.nfsd-12600[disp] nfs_rpc_cond_stall_xprt :DISP :EVENT :xprt 0x7f99b803a500 has 5001 reqs, marking stalled
+&lt;/pre&gt;
+&lt;p&gt;Both the above messages usually indicate a slow back end (aka any of
+GPFS, Network, or Storage).  Other reason could be a hung NFS-Ganesha
+worker threads. If periodic execution of &amp;quot;ganesha_stats&amp;quot; show increased
+number of processed operations, then it is unlikely to be an NFS-Ganesha
+hang.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="ganesha-hangs"&gt;
+&lt;h2&gt;Ganesha hangs&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;tcpdump should be collected to determine a possible root cause&lt;/li&gt;
+&lt;li&gt;tcpdump from both sides (NFS client and NFS server) would be good&lt;/li&gt;
+&lt;li&gt;Always use pcap format while capturing the data (use -w &amp;lt;filename&amp;gt;
+option with tcpdump command)&lt;/li&gt;
+&lt;li&gt;Full packet capture should be done for hangs (-s0)&lt;/li&gt;
+&lt;li&gt;Use ganesha_mgr to capture NFS-Ganesha traces&lt;/li&gt;
+&lt;li&gt;Enable GPFS tracing (vnode level 5)&lt;/li&gt;
+&lt;li&gt;A forced coredump of NFS-Ganesha daemon&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;See &lt;a class="reference external" href="https://ganltc.github.io/data-collection-for-nfs-ganesha-hang-or-performance-issue.html"&gt;data collection for hang analysis&lt;/a&gt; for more details..&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="nfs"></category><category term="nfs"></category></entry><entry><title>Setup to take ganesha coredumps</title><link href="https://ganltc.github.io/setup-to-take-ganesha-coredumps.html" rel="alternate"></link><published>2017-09-22T00:00:00-05:00</published><updated>2017-12-13T00:00:00-06:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2017-09-22:/setup-to-take-ganesha-coredumps.html</id><summary type="html">&lt;p class="first last"&gt;Setup to take ganesha coredumps&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="redhat-rhel7-x"&gt;
+&lt;h2&gt;Redhat RHEL7.x&lt;/h2&gt;
+&lt;p&gt;Automatic Bug Reporting Tool (&lt;strong&gt;ABRT&lt;/strong&gt;) is the preferred method to take
+application coredumps on Redhat Enterprise Linux systems. The following
+steps can be used to configure an RHEL 7.x system to take Ganesha
+coredumps:&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;Install the abrt-cli RPM if not already installed:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+yum install abrt-cli
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;IBM ganesha package are not signed, so you need to configure ABRT to
+take coredumps from executables belonging to unsigned packages:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Set OpenGPGCheck=no in the /etc/abrt/abrt-action-save-package-data.conf file.
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Allow coredump to be unlimited in size (limited by the space
+available in /var/spool/abrt filesystem):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Set MaxCrashReportsSize = 0 in the /etc/abrt/abrt.conf file.
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Start (or restart) the abrt daemon service:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+systemctl restart abrtd
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Start (or restart) the abort-ccpp service:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+systemctl restart abrt-ccpp
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;A core dump might not be generated for code areas where the Ganesha
+process changed its credentials. To take coredump from all paths,
+fs.suid_dumpable should be set to 2:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Insert the following entry into the /etc/sysctl.conf file:
+fs.suid_dumpable = 2
+
+Run the following to make the above setting effective:
+sysctl -p
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Verify that kernel.core_pattern is set to abrt-hook-ccpp (something
+like &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;|/usr/libexec/abrt-hook-ccpp&lt;/span&gt; %s %c %p %u %g %t e %P %I %h&lt;/tt&gt;
+and fs.suid_dumpable is set to 2:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# sysctl kernel.core_pattern
+kernel.core_pattern = |/usr/libexec/abrt-hook-ccpp %s %c %p %u %g %t e %P %I %h
+
+# sysctl fs.suid_dumpable
+fs.suid_dumpable = 2
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Verify that the system actually takes Ganesha coredumps when it
+crashes! Here we send abort signal to Ganesha process to
+intentionally crash it, please note that the Ganesha daemon will be
+terminated after this and the generated coredump should be deleted as it is
+useless:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# kill -SIGABRT &amp;lt;Ganesh-daemon-PID&amp;gt;
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;For additional details, see the Documentation about ABRT-specific configuration.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="coredump"></category><category term="coredump"></category></entry><entry><title>How to build these github pages</title><link href="https://ganltc.github.io/how-to-build-these-github-pages.html" rel="alternate"></link><published>2017-09-20T00:00:00-05:00</published><updated>2017-09-20T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2017-09-20:/how-to-build-these-github-pages.html</id><summary type="html">&lt;p class="first last"&gt;Steps to build this blog&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="software"&gt;
+&lt;h2&gt;Software&lt;/h2&gt;
+&lt;p&gt;pelican is a blog software written in python that generates html files
+from your markdown or restructured text and other markup files. We use
+restructured text files here. You need pelican (and ghp-import to make
+our life easier).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="install-pelican-and-ghp-import-with"&gt;
+&lt;h2&gt;Install Pelican and ghp-import with&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+pip install --user pelican
+pip install --user ghp-import
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="clone-the-source-of-this-blog-pages"&gt;
+&lt;h2&gt;Clone the source of this blog pages&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+git clone https://github.com/ganltc/pages.git
+cd pages
+
+Update or add new restructured text files (.rst extension) in &amp;quot;content&amp;quot;
+directory with any changes you want
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="test-locally"&gt;
+&lt;h2&gt;Test locally&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+make html    # creates &amp;quot;output&amp;quot; directory from &amp;quot;content&amp;quot;
+Open &amp;quot;output/index.html&amp;quot; with your favourite browser.
+Edit the .rst files until you think they look good in your browser!
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="push-the-source-rst-files-repo-upstream"&gt;
+&lt;h2&gt;Push the source (rst files) repo upstream&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+git commit -a       # commit your changes locally
+git push origin master # update github pages repo
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="create-gh-pages-branch-with-ghp-import-tool"&gt;
+&lt;h2&gt;Create gh-pages branch with ghp-import tool&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+make publish        # creates &amp;quot;output&amp;quot; directory for publishing
+ghp-import output   # creates gh-pages git branch with &amp;quot;output&amp;quot;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="push-gh-pages-upstream-to-ganltc-github-io-repo"&gt;
+&lt;h2&gt;Push gh-pages upstream to ganltc.github.io repo&lt;/h2&gt;
+&lt;pre class="literal-block"&gt;
+git push https://github.com/ganltc/ganltc.github.io gh-pages:master
+&lt;/pre&gt;
+&lt;/div&gt;
+</content><category term="pelican"></category><category term="pelican"></category></entry><entry><title>tcpdump analysis</title><link href="https://ganltc.github.io/tcpdump-analysis.html" rel="alternate"></link><published>2017-09-16T00:00:00-05:00</published><updated>2017-09-16T00:00:00-05:00</updated><author><name>Malahal Naineni</name></author><id>tag:ganltc.github.io,2017-09-16:/tcpdump-analysis.html</id><summary type="html">&lt;p class="first last"&gt;tcpdump analysis for nfs issues&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="hangs"&gt;
+&lt;h2&gt;Hangs&lt;/h2&gt;
+&lt;p&gt;Note that if an NFS server doesn't respond to a client's request, the
+request should be retried by the NFS client. Taking tcpdump for hangs
+should be the best way to determine if it is a client's fault or the
+server's fault. If you don't see anything in the tcpdump, then it is a
+client's failure to retry. If the client is retrying but the server
+isn't responding, then it is likely the server's issue. If they both
+talk to each other same thing over and over again, then it is time to
+consult the protocol to see why that is happening and whose fault it is.&lt;/p&gt;
+&lt;p&gt;Since this is a hang and you want to see what is happening in its full
+glory, capturing everything at the NFS client would be ideal assuming
+that the server might be serving other NFS clients. The following
+tcpdump options while executing it from NFS client are recommented, use
+your best judgement though:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+tcpdump -i &amp;lt;iface&amp;gt; -s0 -w &amp;lt;pcapfile-name&amp;gt; host &amp;lt;NFS-server-ip-address&amp;gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="performance"&gt;
+&lt;h2&gt;Performance&lt;/h2&gt;
+&lt;p&gt;Performance should be analysed by performance counters. This is beyond
+the scope of tmcpdump. Tcpdump sometimes gives a good indication of
+performance issues by RTT statistics. The following pcap file shows high
+WRITE (with FILE_SYNC mode) average response time (78ms), most likely
+due to the backend file system being slow (with large files!). It most
+likely caused other operations to be slow as well:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+$ tshark -q -zrpc,srt,100003,3  -r slow-writes.pcap
+
+=======================================================
+NFS Version 3 SRT Statistics:
+Filter:
+Procedure        Calls    Min SRT    Max SRT    Avg SRT
+GETATTR           2549   0.000056   6.688285   0.222500
+SETATTR             79   0.000100   0.186188   0.008062
+ACCESS             541   0.014839   5.270222   0.285889
+READ                 2   0.132805   2.016926   1.074866
+WRITE             9188   0.000125   7.358130   0.784342
+READDIRPLUS       1821   0.000078   1.096325   0.042413
+FSSTAT            1210   0.000055   7.479788   0.322355
+COMMIT               1   0.022565   0.022565   0.022565
+=======================================================
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="filter-nfs-port-traffic"&gt;
+&lt;h2&gt;Filter NFS port traffic&lt;/h2&gt;
+&lt;p&gt;Port 2049 is used for NFSv3 and NFSv4. Note that MOUNT, NLM, NSM protocols used
+in NFSv3 environments use random ports.&lt;/p&gt;
+&lt;p&gt;The following filter will display port 2049 (aka NFS) traffic only:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+$ tshark -Ynfs  -r nfs.pcap
+7          0 192.168.200.16 -&amp;gt; 192.168.200.184 NFS 4302 V3 WRITE Call, FH: 0xdb3717db Offset: 20603228160 Len: 4096 FILE_SYNC
+10          0 192.168.102.121 -&amp;gt; 192.168.102.183 NFS 210 V3 FSSTAT Call, FH: 0x6eb2ec3f
+14          0 192.168.200.27 -&amp;gt; 192.168.200.184 NFS 4310 V3 WRITE Call, FH: 0x50a17930 Offset: 2528481280 Len: 4096 FILE_SYNC
+27          0 192.168.101.41 -&amp;gt; 192.168.101.183 NFS 186 V3 GETATTR Call, FH: 0xc4cfb703
+31          0 192.168.200.16 -&amp;gt; 192.168.200.184 NFS 4302 V3 WRITE Call, FH: 0xc36dcd2e Offset: 21383094272 Len: 4096 FILE_SYNC
+35          0 192.168.200.11 -&amp;gt; 192.168.200.184 NFS 24790 V3 WRITE Call, FH: 0x4c45ddae Offset: 2464600064 Len: 24576 FILE_SYNC
+45          0 192.168.200.25 -&amp;gt; 192.168.200.184 NFS 8406 V3 WRITE Call, FH: 0xc0d7fbd3 Offset: 2523549696 Len: 8192 FILE_SYNC
+51          0 192.168.200.11 -&amp;gt; 192.168.200.184 NFS 3822 V3 WRITE Call, FH: 0x424ed19f Offset: 41099276288 Len: 53248 FILE_SYNC
+59          0 192.168.102.183 -&amp;gt; 192.168.102.121 NFS 230 V3 FSSTAT Reply (Call In 10)
+60          0 192.168.102.121 -&amp;gt; 192.168.102.183 NFS 210 V3 FSSTAT Call, FH: 0x68a15344
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="capturing-nfsv3-byte-range-lock-traffic"&gt;
+&lt;h2&gt;Capturing NFSv3 byte range lock traffic&lt;/h2&gt;
+&lt;p&gt;NFSv3 environments use NLM protocol. Find the NLM port number using &amp;quot;rcpinfo -p
+&amp;lt;NFS-server&amp;gt;&amp;quot; and search for nlockmgr port number. Then use the tcpdump &amp;quot;port
+&amp;lt;port&amp;gt;&amp;quot; option to capture only the NLM traffic. For example, tcp NLM port
+number is 46859 in the example below:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+# rpcinfo -p vm2
+  program vers proto   port  service
+   100000    4   tcp    111  portmapper
+   100000    3   tcp    111  portmapper
+   100000    2   tcp    111  portmapper
+   100000    4   udp    111  portmapper
+   100000    3   udp    111  portmapper
+   100000    2   udp    111  portmapper
+   100024    1   udp  55665  status
+   100024    1   tcp  49741  status
+   100003    3   udp   2049  nfs
+   100003    3   tcp   2049  nfs
+   100003    4   udp   2049  nfs
+   100003    4   tcp   2049  nfs
+   100005    1   udp  60952  mountd
+   100005    1   tcp  45982  mountd
+   100005    3   udp  60952  mountd
+   100005    3   tcp  45982  mountd
+   100021    4   udp  33489  nlockmgr
+   100021    4   tcp  46859  nlockmgr
+   100011    1   udp  50620  rquotad
+   100011    1   tcp  33899  rquotad
+   100011    2   udp  50620  rquotad
+   100011    2   tcp  33899  rquotad
+&lt;/pre&gt;
+&lt;p&gt;To capture traffic going to or from port 46859, you can do:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+tcpdump -i &amp;lt;iface&amp;gt; -s0 -w &amp;lt;pcapfile-name&amp;gt; &amp;quot;tcp port 46859 and host &amp;lt;NFS-server-ip-address&amp;gt;&amp;quot;
+&lt;/pre&gt;
+&lt;/div&gt;
+</content><category term="tcpdump"></category><category term="tcpdump"></category></entry></feed>

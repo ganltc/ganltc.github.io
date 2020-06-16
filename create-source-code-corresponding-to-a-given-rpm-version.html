@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Malahal Naineni" />
+
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary">
+
+<meta name="keywords" content="source, git, " />
+
+<meta property="og:title" content="Create source code corresponding to a given rpm version "/>
+<meta property="og:url" content="https://ganltc.github.io/create-source-code-corresponding-to-a-given-rpm-version.html" />
+<meta property="og:description" content="Create source code corresponding to a given rpm version Use git clone to clone the NFS-Ganesha software: git clone https://github.com/ganltc/nfs-ganesha.git Go into the base directory of the git repo: cd nfs-ganesha Use rpm command to get NFS-Ganesha package version, for example: On one system: # rpm …" />
+<meta property="og:site_name" content="ganltc blog" />
+<meta property="og:article:author" content="Malahal Naineni" />
+<meta property="og:article:published_time" content="2018-05-08T00:00:00-05:00" />
+<meta property="og:article:modified_time" content="2018-05-08T00:00:00-05:00" />
+<meta name="twitter:title" content="Create source code corresponding to a given rpm version ">
+<meta name="twitter:description" content="Create source code corresponding to a given rpm version Use git clone to clone the NFS-Ganesha software: git clone https://github.com/ganltc/nfs-ganesha.git Go into the base directory of the git repo: cd nfs-ganesha Use rpm command to get NFS-Ganesha package version, for example: On one system: # rpm …">
+
+        <title>Create source code corresponding to a given rpm version  · ganltc blog
+</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/elegant.prod.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/custom.css" media="screen">
+
+        <link href="https://ganltc.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="ganltc blog - Full Atom Feed" />
+
+
+    </head>
+    <body>
+        <div id="content">
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="https://ganltc.github.io/"><span class=site-name>ganltc blog</span></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right top-menu">
+                                <li >
+                                    <a href=
+                                       https://ganltc.github.io
+                                    >Home</a>
+                                </li>
+                                <li ><a href="https://ganltc.github.io/categories.html">Categories</a></li>
+                                <li ><a href="https://ganltc.github.io/tags.html">Tags</a></li>
+                                <li ><a href="https://ganltc.github.io/archives.html">Archives</a></li>
+                                <li><form class="navbar-search" action="https://ganltc.github.io/search.html" onsubmit="return validateForm(this.elements['q'].value);"> <input type="text" class="search-query" placeholder="Search" name="q" id="tipue_search_input"></form></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="span1"></div>
+                    <div class="span10">
+<article itemscope>
+<div class="row-fluid">
+    <header class="page-header span10 offset2">
+        <h1>
+            <a href="https://ganltc.github.io/create-source-code-corresponding-to-a-given-rpm-version.html">
+                Create source code corresponding to a given rpm version
+            </a>
+        </h1>
+    </header>
+</div>
+
+<div class="row-fluid">
+        <div class="span8 offset2 article-content">
+            
+            <div class="section" id="id1">
+<h2>Create source code corresponding to a given rpm version</h2>
+<ol class="arabic">
+<li><p class="first">Use git clone to clone the NFS-Ganesha software:</p>
+<pre class="literal-block">
+git clone https://github.com/ganltc/nfs-ganesha.git
+</pre>
+</li>
+<li><p class="first">Go into the base directory of the git repo:</p>
+<pre class="literal-block">
+cd nfs-ganesha
+</pre>
+</li>
+<li><p class="first">Use rpm command to get NFS-Ganesha package version, for example:</p>
+<p>On one system:</p>
+<pre class="literal-block">
+# rpm -qa | grep nfs-ganesha
+nfs-ganesha-debuginfo-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-gpfs-2.5.3-ibm015.03.el7.centos.x86_64
+nfs-ganesha-utils-2.5.3-ibm015.03.el7.centos.x86_64
+</pre>
+<p>On another system:</p>
+<pre class="literal-block">
+# rpm -qa|grep nfs-ganesha
+nfs-ganesha-2.3.2-0.ibm53.el7.x86_64
+nfs-ganesha-gpfs-2.3.2-0.ibm53.el7.x86_64
+nfs-ganesha-utils-2.3.2-0.ibm53.el7.x86_64
+</pre>
+</li>
+<li><p class="first">The git tags that created the above packages should be <strong>V2.5.3-ibm015.03</strong>
+on the first system and <strong>V2.3.2-ibm53</strong> on the second system.</p>
+<p><em>The first 3 version numbers (2.5.3 or 2.3.2) followed by the package name
+indicate that these packages are based on the upstream NFS-Ganesha
+version 2.5.3 and NFS-Ganesha version 2.3.2</em> respectively.</p>
+<p><em>The string &quot;-ibm&quot; to all the way to &quot;.el7&quot; is added by IBM packaging.
+The tag is &quot;Vx.y.z-&lt;ibm-added-string&gt;&quot;</em></p>
+<p>Find the exact tag from the git repo:</p>
+<pre class="literal-block">
+$ git tag | grep ibm015.03
+V2.5.3-ibm015.03
+</pre>
+</li>
+<li><p class="first">Check out the above tag's source code with a local branch name same as the
+tag itself:</p>
+<pre class="literal-block">
+git checkout -b V2.5.3-ibm015.03 V2.5.3-ibm015.03
+</pre>
+</li>
+<li><p class="first">Checkout libntirpc source code (used by NFS-Ganesha) as well:</p>
+<pre class="literal-block">
+git submodule update --init
+</pre>
+</li>
+<li><p class="first">Now you should have the source code. All the source code is in &quot;src&quot;
+directory.</p>
+</li>
+</ol>
+</div>
+
+
+
+             
+ 
+            
+            
+            
+
+
+
+
+
+
+            <hr/>
+        </div>
+        <section id="article-sidebar" class="span2">
+            <h4>Published</h4>
+            <time itemprop="dateCreated" datetime="2018-05-08T00:00:00-05:00">May 8, 2018</time>
+
+            <h4>Category</h4>
+            <a class="category-link" href="https://ganltc.github.io/categories.html#git-ref">git</a>
+            <h4>Tags</h4>
+            <ul class="list-of-tags tags-in-article">
+                <li><a href="https://ganltc.github.io/tags.html#source-ref">source
+                    <span>1</span>
+</a></li>
+            </ul>
+<h4>Contact</h4>
+<div id="sidebar-social-link">
+</div>
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+</div>
+</article>
+                    </div>
+                    <div class="span1"></div>
+                </div>
+            </div>
+        </div>
+<footer>
+
+
+
+
+    <div id="fpowered">
+        Powered by: <a href="http://getpelican.com/" title="Pelican Home Page" target="_blank" rel="nofollow noopener noreferrer">Pelican</a>
+        Theme: <a href="https://elegant.oncrashreboot.com/" title="Theme Elegant Home Page" target="_blank" rel="nofollow noopener noreferrer">Elegant</a>
+    </div>
+</footer>            <script src="//code.jquery.com/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script>
+            function validateForm(query)
+            {
+                return (query.length > 0);
+            }
+        </script>
+
+    <script>
+    (function () {
+        if (window.location.hash.match(/^#comment-\d+$/)) {
+            $('#comment_thread').collapse('show');
+        }
+    })();
+    window.onhashchange=function(){
+        if (window.location.hash.match(/^#comment-\d+$/))
+            window.location.reload(true);
+    }
+    $('#comment_thread').on('shown', function () {
+        var link = document.getElementById('comment-accordion-toggle');
+        var old_innerHTML = link.innerHTML;
+        $(link).fadeOut(200, function() {
+            $(this).text('Click here to hide comments').fadeIn(200);
+        });
+        $('#comment_thread').on('hidden', function () {
+            $(link).fadeOut(200, function() {
+                $(this).text(old_innerHTML).fadeIn(200);
+            });
+        })
+    })
+</script>
+
+    </body>
+    <!-- Theme: Elegant built for Pelican
+        License : MIT -->
+</html>

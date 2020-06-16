@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Malahal Naineni" />
+
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary">
+
+<meta name="keywords" content="nfs, nfs, " />
+
+<meta property="og:title" content="Problem Determination Guide for Spectrum Scale NFS-Ganesha "/>
+<meta property="og:url" content="https://ganltc.github.io/problem-determination-guide-for-spectrum-scale-nfs-ganesha.html" />
+<meta property="og:description" content="NFS-Ganesha problem determination." />
+<meta property="og:site_name" content="ganltc blog" />
+<meta property="og:article:author" content="Malahal Naineni" />
+<meta property="og:article:published_time" content="2017-09-22T00:00:00-05:00" />
+<meta property="og:article:modified_time" content="2018-07-16T00:00:00-05:00" />
+<meta name="twitter:title" content="Problem Determination Guide for Spectrum Scale NFS-Ganesha ">
+<meta name="twitter:description" content="NFS-Ganesha problem determination.">
+
+        <title>Problem Determination Guide for Spectrum Scale NFS-Ganesha  · ganltc blog
+</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/elegant.prod.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/custom.css" media="screen">
+
+        <link href="https://ganltc.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="ganltc blog - Full Atom Feed" />
+
+
+    </head>
+    <body>
+        <div id="content">
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="https://ganltc.github.io/"><span class=site-name>ganltc blog</span></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right top-menu">
+                                <li >
+                                    <a href=
+                                       https://ganltc.github.io
+                                    >Home</a>
+                                </li>
+                                <li ><a href="https://ganltc.github.io/categories.html">Categories</a></li>
+                                <li ><a href="https://ganltc.github.io/tags.html">Tags</a></li>
+                                <li ><a href="https://ganltc.github.io/archives.html">Archives</a></li>
+                                <li><form class="navbar-search" action="https://ganltc.github.io/search.html" onsubmit="return validateForm(this.elements['q'].value);"> <input type="text" class="search-query" placeholder="Search" name="q" id="tipue_search_input"></form></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="span1"></div>
+                    <div class="span10">
+<article itemscope>
+<div class="row-fluid">
+    <header class="page-header span10 offset2">
+        <h1>
+            <a href="https://ganltc.github.io/problem-determination-guide-for-spectrum-scale-nfs-ganesha.html">
+                Problem Determination Guide for Spectrum Scale NFS-Ganesha
+            </a>
+        </h1>
+    </header>
+</div>
+
+<div class="row-fluid">
+        <div class="span8 offset2 article-content">
+            
+            <div class="section" id="installation-issues">
+<h2>Installation issues</h2>
+<p>NFS-Ganesha project uses libntirpc as a subproject. We currently ship
+libntirpc library code as part of the NFS-Ganesha packages. Redhat ships
+libntirpc and NFS-Ganesha packages separately. If you already installed
+libntirpc packages from EPEL repository, you will have same files conflicting
+from IBM supplied NFS-Ganesha packages. Please remove existing libntirpc
+packages or de-activate yum/dnf repository supplying libntirpc package.</p>
+<p>Other than the above issue, there shouldn't be any issues as long as you
+installed on supported distributions!</p>
+</div>
+<div class="section" id="starting-nfs-ganesha-service">
+<h2>Starting NFS-Ganesha service</h2>
+<p><strong>If you are unable to start nfs-ganesha service ganesha.log
+(preferably with FULL_DEBUG mode) and syslog will provide us the most
+valuable information.</strong> Here are some common issues:</p>
+<ol class="arabic simple">
+<li><strong>SELinux</strong></li>
+</ol>
+<p>SELinux in some Linux distros prevents NFS-Ganesha daemon
+(/usr/bin/ganesha.nfsd) to open /dev/ss0 which is required for exporting
+any GPFS file system exports.  SELinux also prevents NFS-Ganesha daemon
+reading its own configuration files! See NFS-Ganesha log for exact failure
+case.</p>
+<p>You need to disable SELinux or teach SELinux to allow ganesha.nfsd
+daemon to open the /dev/ss0 character special file.</p>
+<ol class="arabic simple" start="2">
+<li><strong>Port already in use</strong></li>
+</ol>
+<p>Historically, all NFS servers use port 2049 for NFS protocol (it is also
+required for NFSv4). So you can't run two NFS servers at the same time.
+You may have another instance of NFS-Ganesha daemon already running or it is
+also possible that Linux kernel NFS server is started with or without
+your knowledge!</p>
+<p>&quot;systemctl mask nfs-server&quot; would be better way to ensure that you don't
+get linux kernel NFS server running!</p>
+</div>
+<div class="section" id="issues-mounting-exports-from-nfs-clients">
+<h2>Issues mounting exports from NFS clients</h2>
+<p>If you have NFS-Ganesha server running, but unable to mount an export
+that you think you should. <strong>Network trace is your best friend here. Actually
+network trace is your best friend for any problem post start up!</strong> Here
+goes a list of issue you may encounter:</p>
+<ol class="arabic">
+<li><p class="first"><strong>NFSv3 mount failure due to portmapper</strong></p>
+<p>Portmapper (mapping of services to ports) service runs at port 111.
+Your client will send GETPORT request for mountd service to get the
+mountd port number on the NFS server node. NFS mount will fail if
+your server doesn't return mountd port for one reason or the other. A
+classic case is that you start Linux kernel NFS server after starting
+NFS-Ganesha server. The Linux kernel NFS server will register it own
+mountd port overwriting NFS-Ganesha mountd port.  Eventually, the
+Linux kernel NFS server will fail to come up as it can't bind to 2049
+NFS port, but the damage has already been done.</p>
+<p>Run &quot;systemctl status nfs-server&quot; and &quot;systemctl status nfs-ganesha&quot;
+and see how and when they are started. &quot;rpcinfo -p&quot; gives the port
+numbers registered with portmapper. &quot;lsof -i :&lt;port&gt;&quot; or &quot;ss -nlp |
+grep &lt;port&gt;&quot; gives the current process on the system using the port.
+If you don't get correct process, then it could be owned by a kernel
+thread!</p>
+<p>The best way to guard against accidental start up of Linux kernel NFS server
+is to mask the service.  You can also disable it but then someone could
+accidentally start it, so we prefer to mask the Linux kernel NFS service
+(<tt class="docutils literal">systemctl mask <span class="pre">nfs-server</span></tt>).</p>
+</li>
+<li><p class="first">** security settings **</p>
+<p>NFV4 is affected more than NFSv3 due to NFSv4 pseudo traversal. If /A
+is exported with 'krb5' only authentication and subdirectory /A/B is
+exported with 'SYS' only authentication, mount of '/A/B' would fail
+unless the NFS client tries krb5 for /A and then 'SYS' for /A/B.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="nfs-client-or-application-hang-due-to-nlm-locks">
+<h2>NFS client or application hang due to NLM locks</h2>
+<p>Linux NFS client and kernel NFS server use the same network lock
+manager.  NFS-Ganesha has its own network lock manager. This means we
+can't have Linux NFS client with an NFSv3 mount and NFS-Ganesha running
+at the same time. If you mount an NFS export with NFSv3 on the node
+running NFS-Ganesha it would take NLM port preventing NFS-Ganesha
+servicing any NLM requests.</p>
+<p>Ganesha registers only version 4 NLM for tcp and udp. So you only see two
+nlockmgr lines in &quot;rcpinfo -p&quot; output:</p>
+<pre class="literal-block">
+# rpcinfo -p | grep lockmgr
+   100021    4   udp  50836  nlockmgr
+   100021    4   tcp  33448  nlockmgr
+</pre>
+<p>The Linux kernel lock manager would register NLM for versions 1, 3 and
+4.  A typical output will have 6 entries as below:</p>
+<pre class="literal-block">
+# rpcinfo -p | grep lockmgr
+   100021    1   udp  53568  nlockmgr
+   100021    3   udp  53568  nlockmgr
+   100021    4   udp  53568  nlockmgr
+   100021    1   tcp  32770  nlockmgr
+   100021    3   tcp  32770  nlockmgr
+   100021    4   tcp  32770  nlockmgr
+</pre>
+<p>&quot;tcpdump&quot; trace would show all NLM requests getting rejects with the
+following as kernel NLM client would only know how to make requests
+(not reponses!):</p>
+<pre class="literal-block">
+Message Type: Reply (1)
+[Program: NLM (100021)]
+[Program Version: 4]
+[Procedure: LOCK (2)]
+Reply State: denied (1)
+[This is a reply to a request in frame 19]
+[Time from request: 0.000102000 seconds]
+Reject State: AUTH_ERROR (1)
+Auth State: bad credential (seal broken) (1)
+</pre>
+</div>
+<div class="section" id="throttling-log-messages">
+<h2>Throttling log messages</h2>
+<p>Some NFS-Ganesha threads read socket data, prepare protocol requests
+with the help of other threads, and then place the requests in request
+queues. NFS-Ganesha worker threads dequeue such requests from the
+request queues for processing. If NFS-Ganesha worker threads are slow in
+processing, the request queues get larger and larger. Instead of
+allowing more and more requests from the NFS clients, the socket reading
+threads throttle reading socket data there by throttling NFS clients
+sending NFS requests.</p>
+<p>NFS-Ganesha logs the following messages when request queue lengths hit
+the configured levels. The first message indicates the global counter
+(total requests from all sockets) reaching its limit, so all sockets are
+throttled. The second message indicates a given transport reaching its
+configured limit and throttles only the corresponding transport:</p>
+<pre class="literal-block">
+2016-11-01 19:48:01 : epoch 000b0042 : localhost : ganesha.nfsd-16645[disp] nfs_rpc_getreq_ng :DISP :EVENT :global outstanding&nbsp;reqs quota exceeded (have 5008, allowed 5000)
+
+2017-12-21 01:55:41 : epoch 00060217 : localhost : ganesha.nfsd-12600[disp] nfs_rpc_cond_stall_xprt :DISP :EVENT :xprt 0x7f99b803a500 has 5001 reqs, marking stalled
+</pre>
+<p>Both the above messages usually indicate a slow back end (aka any of
+GPFS, Network, or Storage).  Other reason could be a hung NFS-Ganesha
+worker threads. If periodic execution of &quot;ganesha_stats&quot; show increased
+number of processed operations, then it is unlikely to be an NFS-Ganesha
+hang.</p>
+</div>
+<div class="section" id="ganesha-hangs">
+<h2>Ganesha hangs</h2>
+<ul class="simple">
+<li>tcpdump should be collected to determine a possible root cause</li>
+<li>tcpdump from both sides (NFS client and NFS server) would be good</li>
+<li>Always use pcap format while capturing the data (use -w &lt;filename&gt;
+option with tcpdump command)</li>
+<li>Full packet capture should be done for hangs (-s0)</li>
+<li>Use ganesha_mgr to capture NFS-Ganesha traces</li>
+<li>Enable GPFS tracing (vnode level 5)</li>
+<li>A forced coredump of NFS-Ganesha daemon</li>
+</ul>
+<p>See <a class="reference external" href="https://ganltc.github.io/data-collection-for-nfs-ganesha-hang-or-performance-issue.html">data collection for hang analysis</a> for more details..</p>
+</div>
+
+
+
+             
+ 
+            
+            
+            
+
+
+
+
+
+
+            <hr/>
+        </div>
+        <section id="article-sidebar" class="span2">
+            <h4>Published</h4>
+            <time itemprop="dateCreated" datetime="2017-09-22T00:00:00-05:00">Sep 22, 2017</time>
+<h4>Last Updated</h4>
+<time datetime="2018-07-16T00:00:00-05:00">Jul 16, 2018</time>
+
+            <h4>Category</h4>
+            <a class="category-link" href="https://ganltc.github.io/categories.html#nfs-ref">nfs</a>
+            <h4>Tags</h4>
+            <ul class="list-of-tags tags-in-article">
+                <li><a href="https://ganltc.github.io/tags.html#nfs-ref">nfs
+                    <span>5</span>
+</a></li>
+            </ul>
+<h4>Contact</h4>
+<div id="sidebar-social-link">
+</div>
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+</div>
+</article>
+                    </div>
+                    <div class="span1"></div>
+                </div>
+            </div>
+        </div>
+<footer>
+
+
+
+
+    <div id="fpowered">
+        Powered by: <a href="http://getpelican.com/" title="Pelican Home Page" target="_blank" rel="nofollow noopener noreferrer">Pelican</a>
+        Theme: <a href="https://elegant.oncrashreboot.com/" title="Theme Elegant Home Page" target="_blank" rel="nofollow noopener noreferrer">Elegant</a>
+    </div>
+</footer>            <script src="//code.jquery.com/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script>
+            function validateForm(query)
+            {
+                return (query.length > 0);
+            }
+        </script>
+
+    <script>
+    (function () {
+        if (window.location.hash.match(/^#comment-\d+$/)) {
+            $('#comment_thread').collapse('show');
+        }
+    })();
+    window.onhashchange=function(){
+        if (window.location.hash.match(/^#comment-\d+$/))
+            window.location.reload(true);
+    }
+    $('#comment_thread').on('shown', function () {
+        var link = document.getElementById('comment-accordion-toggle');
+        var old_innerHTML = link.innerHTML;
+        $(link).fadeOut(200, function() {
+            $(this).text('Click here to hide comments').fadeIn(200);
+        });
+        $('#comment_thread').on('hidden', function () {
+            $(link).fadeOut(200, function() {
+                $(this).text(old_innerHTML).fadeIn(200);
+            });
+        })
+    })
+</script>
+
+    </body>
+    <!-- Theme: Elegant built for Pelican
+        License : MIT -->
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Malahal Naineni" />
+
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary">
+
+<meta name="keywords" content="git, git, " />
+
+<meta property="og:title" content="Source code Repository maintenance "/>
+<meta property="og:url" content="https://ganltc.github.io/source-code-repository-maintenance.html" />
+<meta property="og:description" content="Source code Repository maintenance Since ganesha V2.7 is actively maintained upstream, &#34;ibm2.7&#34; branch uses rebase to easily identify our patches that are NOT in upstream yet. It also uses &#39;merge&#39; strategy to make sure we don&#39;t modify the history and can get back to any old tags that …" />
+<meta property="og:site_name" content="ganltc blog" />
+<meta property="og:article:author" content="Malahal Naineni" />
+<meta property="og:article:published_time" content="2018-03-23T00:00:00-05:00" />
+<meta property="og:article:modified_time" content="2019-07-19T00:00:00-05:00" />
+<meta name="twitter:title" content="Source code Repository maintenance ">
+<meta name="twitter:description" content="Source code Repository maintenance Since ganesha V2.7 is actively maintained upstream, &#34;ibm2.7&#34; branch uses rebase to easily identify our patches that are NOT in upstream yet. It also uses &#39;merge&#39; strategy to make sure we don&#39;t modify the history and can get back to any old tags that …">
+
+        <title>Source code Repository maintenance  · ganltc blog
+</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/elegant.prod.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="https://ganltc.github.io/theme/css/custom.css" media="screen">
+
+        <link href="https://ganltc.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="ganltc blog - Full Atom Feed" />
+
+
+    </head>
+    <body>
+        <div id="content">
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="https://ganltc.github.io/"><span class=site-name>ganltc blog</span></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right top-menu">
+                                <li >
+                                    <a href=
+                                       https://ganltc.github.io
+                                    >Home</a>
+                                </li>
+                                <li ><a href="https://ganltc.github.io/categories.html">Categories</a></li>
+                                <li ><a href="https://ganltc.github.io/tags.html">Tags</a></li>
+                                <li ><a href="https://ganltc.github.io/archives.html">Archives</a></li>
+                                <li><form class="navbar-search" action="https://ganltc.github.io/search.html" onsubmit="return validateForm(this.elements['q'].value);"> <input type="text" class="search-query" placeholder="Search" name="q" id="tipue_search_input"></form></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="span1"></div>
+                    <div class="span10">
+<article itemscope>
+<div class="row-fluid">
+    <header class="page-header span10 offset2">
+        <h1>
+            <a href="https://ganltc.github.io/source-code-repository-maintenance.html">
+                Source code Repository maintenance
+            </a>
+        </h1>
+    </header>
+</div>
+
+<div class="row-fluid">
+        <div class="span8 offset2 article-content">
+            
+            <div class="section" id="id1">
+<h2>Source code Repository maintenance</h2>
+<p>Since ganesha V2.7 is actively maintained upstream, &quot;ibm2.7&quot; branch
+uses rebase to easily identify our patches that are NOT in upstream yet.
+It also uses 'merge' strategy to make sure we don't modify the history
+and can get back to any old tags that we built in the past. It uses the
+strategy outlined here at <a class="reference external" href="http://fanf.livejournal.com/128282.html">http://fanf.livejournal.com/128282.html</a>, Use
+git-repub.sh script from
+<a class="reference external" href="https://git.csx.cam.ac.uk/x/ucs/git/git-repub.git">https://git.csx.cam.ac.uk/x/ucs/git/git-repub.git</a> while merging.</p>
+<p>These are the steps we follow for updating ibm2.7 branch.</p>
+<ol class="arabic">
+<li><p class="first">Make sure you have the latest changes from the ganltc remote as well
+as the upstream repo.  Assuming that &quot;ganltc&quot; remote points to
+<a class="reference external" href="https://github.com/ganltc/nfs-ganesha.git">https://github.com/ganltc/nfs-ganesha.git</a> and &quot;origin&quot; points to
+<a class="reference external" href="https://github.com/nfs-ganesha/nfs-ganesha.git">https://github.com/nfs-ganesha/nfs-ganesha.git</a>:</p>
+<pre class="literal-block">
+git fetch ganltc &amp;&amp; git fetch origin
+</pre>
+</li>
+<li><p class="first">Create the deployment branch &quot;ibm2.7&quot;:</p>
+<pre class="literal-block">
+git checkout -b ibm2.7 ganltc/ibm2.7
+</pre>
+</li>
+<li><p class="first">Create a working branch from ibm2.7 from the merge commit's second
+parent:</p>
+<pre class="literal-block">
+git checkout -b working ganltc/ibm2.7^2
+</pre>
+</li>
+<li><p class="first">Perform one of the following steps</p>
+<ul>
+<li><p class="first">If we are rebasing on top of the latest V2.7-stable, update the
+checked out working branch by rebasing our patches with the latest
+V2.7-stable. Note that the version patch always fails to merge.
+Fix the version and <strong>modify the version commit message</strong> to reflect
+the new version!:</p>
+<pre class="literal-block">
+git rebase origin/next
+git commit -a --amend # to fix version commit message
+</pre>
+</li>
+<li><p class="first">If we want to add some extra patches, just add them using &quot;git
+cherry-pick&quot; and <strong>create a new version patch and remove the old
+version patch</strong>:</p>
+<pre class="literal-block">
+git cherry-pick -x &lt;commit1&gt;
+git cherry-pick -x &lt;commit2&gt;
+git rebase -i &lt;deep-enough-commit&gt; to reorder and edit the old version
+    commit to the top and then modify src/CMakeLists.txt and
+    debian/changelog files appropriately with a new version.
+git commit -a --amend # to modify the version commit
+</pre>
+</li>
+</ul>
+</li>
+<li><p class="first">At this point, your working branch has all the patches you need in
+a linear history, no merge commits etc. It should have the version
+commit at the top. This is ready for testing. Run cthon/pynfs with
+this 'working' branch.</p>
+</li>
+<li><p class="first">Use git-repub.sh script to merge (this is due to lack of gits &quot;-s
+theirs&quot; merge strategy option):</p>
+<pre class="literal-block">
+git-repub.sh --rw working --ff ibm2.7
+
+The above command may need --force option in case your deployment
+branch ibm2.7 is getting prepared for the first time!
+</pre>
+</li>
+<li><p class="first">Make sure that the deployment branch &quot;ibm2.7&quot; has merge commit as its HEAD:</p>
+<pre class="literal-block">
+gitk ibm2.7 OR &quot;git cat-file -p ibm2.7 | grep ^parent&quot;
+</pre>
+</li>
+<li><p class="first">Make sure that the deployment branch and the working branch have the
+same exact code (no diff output is expected!):</p>
+<pre class="literal-block">
+git diff ibm2.7 working
+</pre>
+</li>
+<li><p class="first">Checkout the deployment branch &quot;ibm2.7&quot;:</p>
+<pre class="literal-block">
+git checkout ibm2.7
+git tag -s &lt;tag&gt;
+git push ganltc ibm2.7
+git push ganltc &lt;tag&gt;
+</pre>
+</li>
+</ol>
+</div>
+
+
+
+             
+ 
+            
+            
+            
+
+
+
+
+
+
+            <hr/>
+        </div>
+        <section id="article-sidebar" class="span2">
+            <h4>Published</h4>
+            <time itemprop="dateCreated" datetime="2018-03-23T00:00:00-05:00">Mar 23, 2018</time>
+<h4>Last Updated</h4>
+<time datetime="2019-07-19T00:00:00-05:00">Jul 19, 2019</time>
+
+            <h4>Category</h4>
+            <a class="category-link" href="https://ganltc.github.io/categories.html#git-ref">git</a>
+            <h4>Tags</h4>
+            <ul class="list-of-tags tags-in-article">
+                <li><a href="https://ganltc.github.io/tags.html#git-ref">git
+                    <span>1</span>
+</a></li>
+            </ul>
+<h4>Contact</h4>
+<div id="sidebar-social-link">
+</div>
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+</div>
+</article>
+                    </div>
+                    <div class="span1"></div>
+                </div>
+            </div>
+        </div>
+<footer>
+
+
+
+
+    <div id="fpowered">
+        Powered by: <a href="http://getpelican.com/" title="Pelican Home Page" target="_blank" rel="nofollow noopener noreferrer">Pelican</a>
+        Theme: <a href="https://elegant.oncrashreboot.com/" title="Theme Elegant Home Page" target="_blank" rel="nofollow noopener noreferrer">Elegant</a>
+    </div>
+</footer>            <script src="//code.jquery.com/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script>
+            function validateForm(query)
+            {
+                return (query.length > 0);
+            }
+        </script>
+
+    <script>
+    (function () {
+        if (window.location.hash.match(/^#comment-\d+$/)) {
+            $('#comment_thread').collapse('show');
+        }
+    })();
+    window.onhashchange=function(){
+        if (window.location.hash.match(/^#comment-\d+$/))
+            window.location.reload(true);
+    }
+    $('#comment_thread').on('shown', function () {
+        var link = document.getElementById('comment-accordion-toggle');
+        var old_innerHTML = link.innerHTML;
+        $(link).fadeOut(200, function() {
+            $(this).text('Click here to hide comments').fadeIn(200);
+        });
+        $('#comment_thread').on('hidden', function () {
+            $(link).fadeOut(200, function() {
+                $(this).text(old_innerHTML).fadeIn(200);
+            });
+        })
+    })
+</script>
+
+    </body>
+    <!-- Theme: Elegant built for Pelican
+        License : MIT -->
+</html>
